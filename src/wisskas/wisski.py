@@ -1,5 +1,8 @@
 import logging
+import pathlib
+
 from lxml import objectify
+
 from wisskas.string_utils import id_to_classname
 
 WISSKI_TYPES = {
@@ -42,12 +45,16 @@ def root_type_dict(paths: list[dict]):
     return {path["rdf_class"]: path for path in paths if "rdf_class" in path}
 
 
-def parse_flat_paths(file):
+def parse_pathbuilder_paths(xml: pathlib.Path | str):
+    """Parses a pathbuilder XML definition from a file or XML string. Returns as a flat dict of WissKIPaths"""
+    if isinstance(xml, pathlib.Path):
+        root_element = objectify.parse(xml).getroot()
+    else:
+        root_element = objectify.fromstring(xml)
+
     # parse flat list of paths
     return dict(
-        parse_path(path)
-        for path in objectify.parse(file).getroot().iterchildren()
-        if path.enabled
+        parse_path(path) for path in root_element.iterchildren() if path.enabled
     )
 
 
@@ -73,4 +80,4 @@ def nest_paths(paths):
 
 
 def parse_paths(file):
-    return nest_paths(parse_flat_paths(file))
+    return nest_paths(parse_pathbuilder_paths(file))

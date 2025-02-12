@@ -1,5 +1,6 @@
 import argparse
 import logging
+import pathlib
 from typing import Callable
 
 from rich_argparse import RichHelpFormatter
@@ -12,7 +13,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=RichHelpFormatter)
     parser.add_argument(
         "-input",
-        type=argparse.FileType("r"),
+        type=pathlib.Path,
         default="tests/data/releven_assertions_20240821.xml",
         help="a WissKI pathbuilder file",
     )
@@ -25,7 +26,6 @@ def main():
     def add_command(command: str, add_subcommand_args: Callable, **kwargs):
         subparser = subparsers.add_parser(
             command,
-            help="show information about WissKI paths",
             formatter_class=RichHelpFormatter,
             **kwargs,
         )

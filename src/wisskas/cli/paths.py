@@ -1,9 +1,11 @@
 from argparse import ArgumentParser
 from typing import Callable
+
 from rich import print as rprint
 from rich.rule import Rule
 from rich.tree import Tree
-from wisskas.wisski import parse_flat_paths, parse_paths
+
+from wisskas.wisski import parse_pathbuilder_paths, parse_paths
 
 
 def register_subcommand(parser: ArgumentParser) -> Callable:
@@ -30,7 +32,7 @@ def main(args):
         return Rule(f"{args.input.name}: {msg}")
 
     if args.flat:
-        paths = parse_flat_paths(args.input)
+        paths = parse_pathbuilder_paths(args.input)
 
         if args.all:
             args.path_id = sorted(paths.keys())
