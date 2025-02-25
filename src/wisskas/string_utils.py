@@ -2,6 +2,22 @@ FILTER_PATH_SEPARATOR = "."
 FILTER_PATH_INVERSION = "^"
 
 
+class PathElement:
+    """Helper class for handling inversions marked by a leading '^'.
+
+    Can be used for any string, not just RDF predicates."""
+
+    def __init__(self, entity: str):
+        self.inverted = entity.startswith("^")
+        self.entity = entity[1 if self.inverted else 0 :]
+
+    def __repr__(self):
+        return f"PathElement('{str(self)}')"
+
+    def __str__(self):
+        return ("^" if self.inverted else "") + self.entity
+
+
 def create_names(
     prefix: str | list[str], postfix: str, used_names=set(), n=1
 ) -> list[str]:
@@ -13,32 +29,42 @@ def create_names(
     )
 
 
-def id_to_classname(path_id) -> str:
+def id_to_classname(path_id: str) -> str:
+    """Generate a valid Python class name from a WissKI path id"""
     return path_id.replace("_", " ").title().replace(" ", "")
 
 
-def parse_endpointspec(pathid_endpointname) -> tuple[str, str]:
+def parse_endpointspec(pathid_endpointname: str) -> tuple[str, str]:
+    """Return the WissKI path id and endpoint URL from an endpoint spec string, e.g.:
+    'person' -> ('person', '/person')
+    'person/myendpoint/list' -> ('person', '/myendpoint/list')
+    """
     if "/" in pathid_endpointname:
-        pathid_endpointname, path = pathid_endpointname.split("/", 1)
+        pathid_endpointname, endpoint_path = pathid_endpointname.split("/", 1)
     else:
-        path = pathid_endpointname
-    return (pathid_endpointname, f"/{path}")
+        endpoint_path = pathid_endpointname
+    return (pathid_endpointname, f"/{endpoint_path}")
 
 
-def parse_filterspec(filterspec):
+def parse_filterspec(filterspec: list[str]) -> dict[PathElement, list[str]]:
+    """['a', 'b.c', 'd.e', 'd.f.g'] -> {'a': [], 'b': [['c']], 'd': [['e'], ['f.g']]}"""
     split = [i.split(FILTER_PATH_SEPARATOR, 1) for i in filterspec]
-    prefixes = set(p for p, *_r in split)
-    return {p: [r[1] for r in split if r[0] == p and len(r) > 1] for p in prefixes}
+    prefixes = set(p for p, *_ in split)
+    # TODO handle * and ** here, or further up?
+    return {
+        PathElement(p): [r[1] for r in split if r[0] == p and len(r) > 1]
+        for p in prefixes
+    }
 
 
-def path_to_camelcase(path):
+def path_to_camelcase(url_path):
     # or .title() on spaced string
-    return "".join([s.capitalize() for s in split_path(path)])
+    return "".join([s.capitalize() for s in split_url_path(url_path)])
 
 
-def path_to_filename(path):
-    return "_".join(split_path(path))
+def path_to_filename(url_path):
+    return "_".join(split_url_path(url_path))
 
 
-def split_path(path):
-    return path.lstrip("/").split("/")
+def split_url_path(url_path):
+    return url_path.lstrip("/").split("/")

@@ -3,24 +3,25 @@ import logging
 
 from wisskas.string_utils import (
     FILTER_PATH_SEPARATOR,
+    PathElement,
     create_names,
     parse_filterspec,
 )
-from wisskas.wisski import WISSKI_TYPES
+from wisskas.wisski import WISSKI_TYPES, WissKIPath
 
 
-class DummyRootPath:
+class DummyRootPath(WissKIPath):
     def __init__(self, root_classname, root):
         self.path_array = []
         self.binding_vars = []
         self.fields = {root_classname: root}
 
 
-def endpoint_exclude_fields(root, exclude, root_classname=None):
+def endpoint_exclude_fields(root, exclude, root_classname):
     return clone_exclude(DummyRootPath(root_classname, root), root_classname, exclude)
 
 
-def endpoint_include_fields(root, include, root_classname=None):
+def endpoint_include_fields(root, include, root_classname):
     return clone_include(DummyRootPath(root_classname, root), root_classname, include)
 
 
@@ -41,7 +42,14 @@ def debug_filter(path, msg, depth=0):
     debug("filtering", path, msg, depth)
 
 
-def create_clone(parent, fieldname, filterspec, prefix, used_names, depth=0):
+def create_clone(
+    parent: WissKIPath,
+    fieldname: str,
+    filterspec: list[str],
+    prefix,
+    used_names,
+    depth=0,
+) -> tuple[WissKIPath, dict[PathElement, list[str]]]:
     # shallow copy
     clone = copy.copy(parent.fields[fieldname])
     clone.path_array = copy.copy(clone.path_array)
@@ -58,9 +66,9 @@ def create_clone(parent, fieldname, filterspec, prefix, used_names, depth=0):
 
     if clone.entity_reference:
         debug_clone(clone, f"entity reference to '{clone.entity_reference.id}'", depth)
-        clone.fields = clone.reference.fields
+        clone.fields = clone.entity_reference.fields
         clone.class_name = f"{parent.class_name}_{clone.entity_reference.class_name}"
-        clone.name = clone.reference.name
+        clone.id = clone.entity_reference.id
     # set parent paths to None
     if len(clone.path_array) > len(parent.path_array):
         for i in range(len(parent.path_array)):
@@ -101,38 +109,47 @@ def create_clone(parent, fieldname, filterspec, prefix, used_names, depth=0):
 
     filters = parse_filterspec(filterspec)
     for key in filters:
-        if key == "*" or key == "**":
-            if key == "*" and len(clone["fields"]) == 0:
+        if key.inverted:
+            raise RuntimeError("not implemented yet")
+        else:
+            key = key.entity
+            if key == "*" or key == "**":
+                if key == "*" and len(clone.fields) == 0:
+                    logging.warning(
+                        f"found '{key}' at {'.'.join(prefix[1:])} even though there are no fields"
+                    )
+                else:
+                    debug_clone(clone, f"found field '{key}'", depth)
+                continue
+            exists = False
+            for f in clone.fields.values():
+                if f.id == key:
+                    debug_clone(clone, f"found field '{key}'", depth)
+                    exists = True
+                    break
+            if not exists:
                 logging.warning(
-                    f"found '{key}' at {'.'.join(prefix[1:])} even though there are no fields"
+                    f"cloning {clone.id} unknown field specified in include/exclude list at {FILTER_PATH_SEPARATOR.join(prefix[1:] or ['the top level'])}: '{key}'"
                 )
-            else:
-                debug_clone(clone, f"found field '{key}'", depth)
-            continue
-        exists = False
-        for f in clone["fields"].values():
-            if f["id"] == key:
-                debug_clone(clone, f"found field '{key}'", depth)
-                exists = True
-                break
-        if not exists:
-            logging.warning(
-                f"cloning {clone.id} unknown field specified in include/exclude list at {FILTER_PATH_SEPARATOR.join(prefix[1:])}: {key}"
-            )
     return (clone, filters)
 
 
-def clone_exclude(parent, fieldname, exclude, prefix=[], used_names=set(), depth=0):
+def clone_exclude(
+    parent: WissKIPath, fieldname: str, exclude, prefix=[], used_names=set(), depth=0
+) -> WissKIPath:
     clone, excludes = create_clone(
         parent, fieldname, exclude, prefix, used_names, depth
     )
-    debug_filter(clone, f"exclude {excludes}")
+    debug_filter(clone, f"raw exclude {exclude}")
+    debug_filter(clone, f"parsed excludes {excludes}")
     if "*" in exclude:
         clone.type = WISSKI_TYPES["uri"]
         clone.fields = {}
         # clone.datatype_property = None
         return clone
     try:
+        # TODO handle inverted paths
+        excludes = {a.entity: b for a, b in excludes.items()}
         clone.fields = {
             name: clone_exclude(
                 clone, name, excludes.get(f.id, []), prefix, used_names, depth + 1
@@ -145,27 +162,32 @@ def clone_exclude(parent, fieldname, exclude, prefix=[], used_names=set(), depth
     return clone
 
 
-def clone_include(parent, fieldname, include, prefix=[], used_names=set(), depth=0):
+def clone_include(
+    parent: WissKIPath, fieldname: str, include, prefix=[], used_names=set(), depth=0
+) -> WissKIPath:
     clone, includes = create_clone(
         parent, fieldname, include, prefix, used_names, depth
     )
-    debug_filter(clone, f"include {includes}", depth)
+    debug_filter(clone, f"raw include {include}", depth)
+    debug_filter(clone, f"parsed includes {includes}", depth)
     if "**" in include:
         clone.fields = {
             name: clone_include(clone, name, ["**"], prefix, used_names)
             for name in clone.fields.keys()
         }
     else:
-        clone["fields"] = {
+        # TODO handle inverted paths
+        includes = {a.entity: b for a, b in includes.items()}
+        clone.fields = {
             name: clone_include(
                 clone, name, includes.get(name, []), prefix, used_names, depth + 1
             )
-            for name in clone["fields"].keys()
+            for name in clone.fields.keys()
             if "*" in include or name in includes
         }
-    if len(clone["fields"]) == 0 and not clone["datatype_property"]:
+    if len(clone.fields) == 0 and not clone.datatype_property:
         debug_filter(clone, "class is down to 0 fields", depth)
-        clone["type"] = WISSKI_TYPES["uri"]
+        clone.type = WISSKI_TYPES["uri"]
     else:
-        debug_filter(clone, f"remaining fields {list(clone['fields'].keys())}", depth)
+        debug_filter(clone, f"remaining fields {list(clone.fields.keys())}", depth)
     return clone
