@@ -3,7 +3,7 @@ import pathlib
 
 from lxml import etree, objectify
 
-from wisskas.string_utils import id_to_classname
+from wisskas.string_utils import PathElement, id_to_classname
 
 WISSKI_TYPES = {
     # TODO add support for all Wisski field types: https://wiss-ki.eu/documentation/pathbuilder/configuration/lists
@@ -11,15 +11,6 @@ WISSKI_TYPES = {
     "list_string": "list[str]",  # FIXME this doesn't get annotated properly, need to change the Type's cardinality instead
     "uri": "AnyUrl",
 }
-
-
-class PathElement:
-    def __init__(self, entity_element: etree._Element):
-        self.inverted = entity_element.text.startswith("^")
-        self.entity = entity_element.text[1 if self.inverted else 0 :]
-
-    def __str__(self):
-        return ("^" if self.inverted else "") + self.entity
 
 
 class WissKIPath:
@@ -35,13 +26,13 @@ class WissKIPath:
         # computed/derived fields
         self.cardinality = self.xml["cardinality"]
         self.path_array = [
-            PathElement(el) for el in path_element.path_array.iterchildren()
+            PathElement(el.text) for el in path_element.path_array.iterchildren()
         ]
 
         self.id = self.xml["id"].text
         self.fields = {}
         self.parents = {}
-        # self.binding_vars = []
+        self.binding_vars = []
 
         # TODO add to path instead?
         self.datatype_property = (
