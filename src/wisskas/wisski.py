@@ -13,6 +13,15 @@ WISSKI_TYPES = {
 }
 
 
+class PathElement:
+    def __init__(self, entity_element: etree._Element):
+        self.inverted = entity_element.text.startswith("^")
+        self.entity = entity_element.text[1 if self.inverted else 0 :]
+
+    def __str__(self):
+        return ("^" if self.inverted else "") + self.entity
+
+
 class WissKIPath:
     def __init__(self, path_element: etree._Element):
         if path_element.tag != "path":
@@ -20,12 +29,14 @@ class WissKIPath:
             raise ValueError("WissKIPath expects a <path> element")
 
         # raw data from WissKI XML -- these are all lxml 'ObjectifiedElement's
-        # child tags are unique so store in dict
+        # with unique child tags, so store in dict
         self.xml = {child.tag: child for child in path_element.iterchildren()}
 
         # computed/derived fields
         self.cardinality = self.xml["cardinality"]
-        self.path_array = [el.text for el in path_element.path_array.iterchildren()]
+        self.path_array = [
+            PathElement(el) for el in path_element.path_array.iterchildren()
+        ]
 
         self.id = self.xml["id"].text
         self.fields = {}
@@ -40,7 +51,7 @@ class WissKIPath:
         )
 
         # set rdf class if this is a root type (== it has no parent group)
-        self.rdf_class = self.path_array[-1] if self.xml["group_id"] == 0 else None
+        self.rdf_class = self.last_entity() if self.xml["group_id"] == 0 else None
         self.group_id = self.xml["group_id"] if self.xml["group_id"] != 0 else None
 
         # is_group is misleading, paths are groups if their fields isn't empty
@@ -54,6 +65,9 @@ class WissKIPath:
             if self.xml["fieldtype"] and not self.entity_reference
             else None
         )
+
+    def last_entity(self) -> str:
+        return self.path_array[-1].entity
 
 
 def root_type_dict(paths: list[WissKIPath]) -> dict[str, WissKIPath]:
@@ -75,7 +89,9 @@ def parse_pathbuilder_paths(xml: pathlib.Path | str) -> list[WissKIPath]:
     ]
 
 
-def nest_paths(paths: list[WissKIPath]):
+def nest_paths(
+    paths: list[WissKIPath],
+) -> tuple[dict[str, WissKIPath], dict[str, WissKIPath]]:
     """Adds field, parent and entity_references to a flat list of paths"""
     root_types = root_type_dict(paths)
     path_dict = {path.id: path for path in paths}
@@ -87,7 +103,7 @@ def nest_paths(paths: list[WissKIPath]):
             if path.entity_reference:
                 # look up based on CRM type
                 try:
-                    path.entity_reference = root_types[path.path_array[-1]]
+                    path.entity_reference = root_types[path.last_entity()]
                     path.entity_reference.parents[path.id] = path
                     # path["fields"] = path["reference"]["fields"]
                     # path["is_group"] = 1
