@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import logging
 import pathlib
 
@@ -61,36 +62,50 @@ class WissKIPath:
         return self.path_array[-1].entity
 
 
-def root_type_dict(paths: list[WissKIPath]) -> dict[str, WissKIPath]:
+WissKIPaths = dict[str, WissKIPath]
+
+
+def root_type_dict(paths: Iterable[WissKIPath]) -> WissKIPaths:
     """Creates a dict which maps rdf class uris to WisskIPath types"""
     return {path.rdf_class: path for path in paths if path.rdf_class}
 
 
-def parse_pathbuilder_paths(xml: pathlib.Path | str) -> list[WissKIPath]:
+def parse_pathbuilder_paths(xml: pathlib.Path | str) -> WissKIPaths:
     """Parses a pathbuilder XML definition from a file or XML string. Returns as a flat dict of WissKIPaths"""
     if isinstance(xml, pathlib.Path):
         root_element = objectify.parse(xml).getroot()
     else:
         root_element = objectify.fromstring(xml)
 
-    return [
-        WissKIPath(path_element)
-        for path_element in root_element.iterchildren()
-        if path_element.enabled
-    ]
+    return check_paths(
+        {
+            path_element["id"].text: WissKIPath(path_element)
+            for path_element in root_element.iterchildren()
+            if path_element.enabled
+        }
+    )
+
+
+def check_paths(paths: WissKIPaths) -> WissKIPaths:
+    """Check WissKI pathbuilder paths for consistency, emit logging messages and return them"""
+    for path in paths.values():
+        if path.group_id and path.group_id not in paths:
+            logging.warning(
+                f"path {path.id} is grouped under nonexisting parent path: {path.group_id}"
+            )
+    return paths
 
 
 def nest_paths(
-    paths: list[WissKIPath],
-) -> tuple[dict[str, WissKIPath], dict[str, WissKIPath]]:
-    """Adds field, parent and entity_references to a flat list of paths"""
-    root_types = root_type_dict(paths)
-    path_dict = {path.id: path for path in paths}
+    paths: WissKIPaths,
+) -> tuple[WissKIPaths, WissKIPaths]:
+    """Adds field, parent and entity_references to a flat dict of paths"""
+    root_types = root_type_dict(paths.values())
 
     # create nested structure
-    for path in paths:
+    for path in paths.values():
         if path.group_id:
-            path_dict[path.group_id].fields[path.id] = path
+            paths[path.group_id].fields[path.id] = path
             if path.entity_reference:
                 # look up based on CRM type
                 try:
@@ -104,8 +119,9 @@ def nest_paths(
                     )
                     path.entity_reference = False
 
-    return (root_types, path_dict)
+    return (root_types, paths)
 
 
-def parse_paths(file):
-    return nest_paths(parse_pathbuilder_paths(file))
+def parse_paths(xml: pathlib.Path | str) -> tuple[WissKIPaths, WissKIPaths]:
+    """Return a tuple dicts, the first mapping RDF class names to WissKIPath, the second mapping WissKI path ids to WissKIPaths"""
+    return nest_paths(parse_pathbuilder_paths(xml))

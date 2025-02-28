@@ -35,14 +35,14 @@ def main(args):
         paths = parse_pathbuilder_paths(args.input)
 
         if args.all:
-            args.path_id = sorted([path.id for path in paths])
+            args.path_id = sorted(paths.keys())
 
         if args.path_id:
             for path_id in args.path_id:
-                rprint(next(filter(lambda p: p.id == path_id, paths)).xml)
+                rprint(paths[path_id].xml)
         else:
             for path in paths:
-                rprint(f"- {path.id}")
+                rprint(f"- {path}")
 
         rprint(file_rule(f"{len(paths)} paths"))
 
