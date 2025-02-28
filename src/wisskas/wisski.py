@@ -105,19 +105,24 @@ def nest_paths(
     # create nested structure
     for path in paths.values():
         if path.group_id:
-            paths[path.group_id].fields[path.id] = path
-            if path.entity_reference:
-                # look up based on CRM type
-                try:
-                    path.entity_reference = root_types[path.last_entity()]
-                    path.entity_reference.parents[path.id] = path
-                    # path["fields"] = path["reference"]["fields"]
-                    # path["is_group"] = 1
-                except KeyError as e:
-                    logging.warning(
-                        f"path {path.id} is an entity_reference, but no known path for target CRM class {e}"
-                    )
-                    path.entity_reference = False
+            try:
+                paths[path.group_id].fields[path.id] = path
+                if path.entity_reference:
+                    # look up based on CRM type
+                    try:
+                        path.entity_reference = root_types[path.last_entity()]
+                        path.entity_reference.parents[path.id] = path
+                        # path["fields"] = path["reference"]["fields"]
+                        # path["is_group"] = 1
+                    except KeyError as e:
+                        logging.warning(
+                            f"path '{path.id}' is an entity_reference, but no known path for target CRM class '{e}'"
+                        )
+                        path.entity_reference = False
+            except KeyError:
+                logging.error(
+                    f"path '{path.id}' is grouped under path id '{path.group_id}' which is missing"
+                )
 
     return (root_types, paths)
 
