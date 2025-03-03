@@ -9,6 +9,8 @@ from wisskas.string_utils import (
 )
 from wisskas.wisski import WISSKI_TYPES, WissKIPath
 
+logger = logging.getLogger(__name__)
+
 
 class DummyRootPath(WissKIPath):
     def __init__(self, root_classname, root):
@@ -31,7 +33,7 @@ def handle_recursion(prefix):
 
 
 def debug(task, path, msg, depth):
-    logging.debug(f"{' ' * 2 * depth}{task} {path.id}: {msg}")
+    logger.debug(f"{' ' * 2 * depth}{task} {path.id}: {msg}")
 
 
 def debug_clone(path, msg, depth=0):
@@ -115,7 +117,7 @@ def create_clone(
             key = key.entity
             if key == "*" or key == "**":
                 if key == "*" and len(clone.fields) == 0:
-                    logging.warning(
+                    logger.warning(
                         f"found '{key}' at {'.'.join(prefix[1:])} even though there are no fields"
                     )
                 else:
@@ -128,7 +130,7 @@ def create_clone(
                     exists = True
                     break
             if not exists:
-                logging.warning(
+                logger.warning(
                     f"cloning {clone.id} unknown field specified in include/exclude list at {FILTER_PATH_SEPARATOR.join(prefix[1:] or ['the top level'])}: '{key}'"
                 )
     return (clone, filters)
