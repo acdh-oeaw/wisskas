@@ -7,6 +7,7 @@ from typing import Callable
 from rich_argparse import RichHelpFormatter
 
 from wisskas.cli.endpoints import register_subcommand as endpoints_args
+from wisskas.cli.filter import register_subcommand as filter_args
 from wisskas.cli.paths import register_subcommand as paths_args
 
 
@@ -39,8 +40,9 @@ def main(args=None):
     add_command(
         "endpoints",
         endpoints_args,
-        help="generate models, queries and FastAPI endpoints",
+        help="generate models, queries and FastAPI endpoints to be used with rdfproxy",
     )
+    add_command("filter", filter_args, help="create a filtered pathbuilder file")
     add_command("paths", paths_args, help="inspect pathbuilder definitions")
 
     cli_output = parser.add_argument_group(
