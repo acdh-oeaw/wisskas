@@ -6,10 +6,13 @@ from lxml import etree, objectify
 
 from wisskas.string_utils import PathElement, id_to_classname
 
+logger = logging.getLogger(__name__)
+
 WISSKI_TYPES = {
     # TODO add support for all Wisski field types: https://wiss-ki.eu/documentation/pathbuilder/configuration/lists
-    "string": "str",
+    "datetime": "datetime.datetime",
     "list_string": "list[str]",  # FIXME this doesn't get annotated properly, need to change the Type's cardinality instead
+    "string": "str",
     "uri": "AnyUrl",
 }
 
@@ -90,7 +93,7 @@ def check_paths(paths: WissKIPaths) -> WissKIPaths:
     """Check WissKI pathbuilder paths for consistency, emit logging messages and return them"""
     for path in paths.values():
         if path.group_id and path.group_id not in paths:
-            logging.warning(
+            logger.warning(
                 f"path {path.id} is grouped under nonexisting parent path: {path.group_id}"
             )
     return paths
@@ -115,12 +118,12 @@ def nest_paths(
                         # path["fields"] = path["reference"]["fields"]
                         # path["is_group"] = 1
                     except KeyError as e:
-                        logging.warning(
+                        logger.warning(
                             f"path '{path.id}' is an entity_reference, but no known path for target CRM class '{e}'"
                         )
                         path.entity_reference = False
             except KeyError:
-                logging.error(
+                logger.error(
                     f"path '{path.id}' is grouped under path id '{path.group_id}' which is missing"
                 )
 

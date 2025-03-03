@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import pathlib
 from typing import Callable
@@ -62,8 +63,18 @@ def main(args=None):
     args = parser.parse_args(args)
 
     logging.basicConfig(
-        level=max(10, 30 - 10 * args.verbose), format="%(levelname)s: %(message)s"
+        level=max(10, 30 - 10 * args.verbose),
+        format="%(levelname)s %(name)s: %(message)s",
     )
+
+    if args.input.suffix == ".json":
+        with open(args.input) as j:
+            xml = json.load(j)["xml"]
+            args.input = args.input.with_suffix(".xml")
+            # exclusive creation
+            # TODO print informative message if file already exists
+            with open(args.input, "x") as x:
+                x.write(xml)
 
     # call subcommand
     args.func(args)
