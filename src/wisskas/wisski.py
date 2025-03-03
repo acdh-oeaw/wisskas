@@ -23,9 +23,8 @@ class WissKIPath:
             # TODO @lupl needs to create a schema for WissKI paths and validate against it
             raise ValueError("WissKIPath expects a <path> element")
 
-        # raw data from WissKI XML -- these are all lxml 'ObjectifiedElement's
-        # with unique child tags, so store in dict
-        self.xml = {child.tag: child for child in path_element.iterchildren()}
+        # raw data from WissKI XML
+        self.xml = path_element
 
         # computed/derived fields
         self.cardinality = self.xml["cardinality"]
@@ -73,7 +72,9 @@ def root_type_dict(paths: Iterable[WissKIPath]) -> WissKIPaths:
     return {path.rdf_class: path for path in paths if path.rdf_class}
 
 
-def parse_pathbuilder_paths(xml: pathlib.Path | str) -> WissKIPaths:
+def parse_pathbuilder_paths(
+    xml: pathlib.Path | str, include_disabled=False
+) -> WissKIPaths:
     """Parses a pathbuilder XML definition from a file or XML string. Returns as a flat dict of WissKIPaths"""
     if isinstance(xml, pathlib.Path):
         root_element = objectify.parse(xml).getroot()
@@ -84,7 +85,7 @@ def parse_pathbuilder_paths(xml: pathlib.Path | str) -> WissKIPaths:
         {
             path_element["id"].text: WissKIPath(path_element)
             for path_element in root_element.iterchildren()
-            if path_element.enabled
+            if include_disabled or path_element.enabled
         }
     )
 
