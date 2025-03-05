@@ -95,7 +95,7 @@ def check_paths(paths: WissKIPaths) -> WissKIPaths:
     for path in paths.values():
         if path.group_id and path.group_id not in paths:
             logger.warning(
-                f"path {path.id} is grouped under nonexisting parent path: {path.group_id}"
+                f"path '{path.id}' is grouped under nonexisting parent path '{path.group_id}'"
             )
     return paths
 
@@ -120,12 +120,12 @@ def nest_paths(
                         # path["is_group"] = 1
                     except KeyError as e:
                         logger.warning(
-                            f"path '{path.id}' is an entity_reference, but no known path for target CRM class '{e}'"
+                            f"failed to resolve entity_reference of path '{path.id}' because there is no known path for target CRM class {e}"
                         )
                         path.entity_reference = False
             except KeyError:
                 logger.error(
-                    f"path '{path.id}' is grouped under path id '{path.group_id}' which is missing"
+                    f"failed to nest path '{path.id}' because it is grouped under '{path.group_id}' which is missing"
                 )
 
     return (root_types, paths)

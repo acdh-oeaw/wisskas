@@ -144,13 +144,16 @@ def clone_exclude(
     )
     debug_filter(clone, f"raw exclude {exclude}")
     debug_filter(clone, f"parsed excludes {excludes}")
+    if any(key.inverted for key in excludes):
+        raise RuntimeError(
+            f"path inversion only makes sense for including fields, not for excluding them (at '{prefix}')"
+        )
     if "*" in exclude:
         clone.type = WISSKI_TYPES["uri"]
         clone.fields = {}
         # clone.datatype_property = None
         return clone
     try:
-        # TODO handle inverted paths
         excludes = {a.entity: b for a, b in excludes.items()}
         clone.fields = {
             name: clone_exclude(
