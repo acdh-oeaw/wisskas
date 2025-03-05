@@ -4,6 +4,7 @@ import logging
 import pathlib
 from typing import Callable
 
+from rich.logging import RichHandler
 from rich_argparse import RichHelpFormatter
 
 from wisskas.cli.endpoints import register_subcommand as endpoints_args
@@ -66,7 +67,8 @@ def main(args=None):
 
     logging.basicConfig(
         level=max(10, 30 - 10 * args.verbose),
-        format="%(levelname)s %(name)s: %(message)s",
+        format="%(name)s: %(message)s",
+        handlers=[RichHandler(rich_tracebacks=True)],
     )
 
     if args.input.suffix == ".json":
@@ -79,4 +81,7 @@ def main(args=None):
                 x.write(xml)
 
     # call subcommand
-    args.func(args)
+    try:
+        args.func(args)
+    except Exception as e:
+        logging.exception(e)
