@@ -22,6 +22,14 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
     )
 
     parser.add_argument(
+        "-0",
+        "--everything-optional",
+        action="store_true",
+        help="also make fields with cardinality 1 optional (default: %(default)s)",
+        default=False,
+    )
+
+    parser.add_argument(
         "-ee",
         "--endpoint-exclude-fields",
         nargs="+",
@@ -127,6 +135,7 @@ def main(args):
         # this is the local filename
         root.filename = filename.rsplit("/", 1)[-1]
         root.details = path.endswith("details")
+        root.everything_optional = args.everything_optional
 
         model = serialize_model(root)
         query = serialize_query(root, args.prefix)
