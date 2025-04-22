@@ -17,11 +17,19 @@ PREFIX {{ prefix }}: <{{ uri }}>
 
 
 {%- macro apply_prefixes(path) -%}
-  {% set ns = namespace(path=path) %}
-  {%- for prefix, uri in prefixes.items() -%}
-    {% set ns.path = (ns.path | replace(uri, prefix ~ ':')) %}
+  {%- if path.inverted -%}^{%- endif -%}
+
+  {%- set ns = namespace(full_uri=True) -%}
+
+  {%- for prefix, uri in prefixes.items() if path.entity.startswith(uri) -%}
+    {%- set ns.full_uri = False -%}
+    {{- path.entity | replace(uri, prefix ~ ":") -}}
   {%- endfor -%}
-  {{- ns.path -}}
+
+  {%- if ns.full_uri -%}
+    <{{- path.entity -}}>
+  {%- endif -%}
+
 {%- endmacro -%}
 
 {%- macro where(class) -%}
