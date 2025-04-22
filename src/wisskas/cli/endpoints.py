@@ -157,8 +157,9 @@ def main(args):
         {"origins": args.cors},
     )
 
-    if args.output_prefix and args.server_address:
-        dump_to_file(entrypoint, f"{args.output_prefix}.py")
-    else:
-        rprint(Rule("FastAPI entry point"))
-        print_code(entrypoint)
+    if args.server_address:
+        if args.output_prefix:
+            dump_to_file(entrypoint, f"{args.output_prefix}.py")
+        else:
+            rprint(Rule("FastAPI entry point"))
+            print_code(entrypoint)
