@@ -44,14 +44,14 @@ class {{ class.class_name }}(BaseModel):
     {%- else -%}
     ????
     {% endif %}
-    {%- if not is_grouped %} | None{% endif %}
+    {%- if root.everything_optional or not is_grouped %} | None{% endif %}
     {%- if field.cardinality == -1 -%}
     ]
     {%- endif -%}
     {%- if field.binding -%}
       , SPARQLBinding("{{ field.binding }}")]{# TODO default value #}
     {%- endif -%}
-    {%- if not is_grouped %} = None{%- endif -%}
+    {%- if root.everything_optional or not is_grouped %} = None{%- endif -%}
 
 {%- endfor -%}
 {%- endmacro -%}

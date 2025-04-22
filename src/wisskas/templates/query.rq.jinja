@@ -45,11 +45,11 @@ PREFIX {{ prefix }}: <{{ uri }}>
     {%- endfor -%}
     {{ '\n' }}
     {%- for name, child in class.fields.items() -%}
-      {%- if child.cardinality == -1 -%}
-        {{- 'OPTIONAL {\n' -}}
+      {%- if root.everything_optional or child.cardinality == -1 -%}
+      {{- '\nOPTIONAL {\n' -}}
       {%- endif -%}
       {{- where(child) -}}
-      {%- if child.cardinality == -1 -%}
+      {%- if root.everything_optional or child.cardinality == -1 -%}
         {{- '}\n' -}}
       {%- endif -%}
     {%- endfor -%}
