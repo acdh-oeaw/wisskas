@@ -875,13 +875,17 @@ wheels = [
 
 [[package]]
 name = "rdfproxy"
-version = "0.2.0"
-source = { git = "https://github.com/acdh-oeaw/rdfproxy?branch=prototype%2Fordering#bfa4c8b97181bb7bd9fde9ce0902182970a84d47" }
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pandas" },
     { name = "pydantic" },
     { name = "rdflib" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d1/a9/0f7502ef869440fcf1c560c7bf7685bf02c2be6cb57a28b6777b67faa1cb/rdfproxy-0.6.0.tar.gz", hash = "sha256:3cd511acfa4499282d4ab83893df2f92b66efcae7a2305d2e00bbf47b70ae91e", size = 111914 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/70/65/6846cf4c74c7a8ad322434a3b369f9ff56c9a274ec4b7bb66bbe212e66de/rdfproxy-0.6.0-py3-none-any.whl", hash = "sha256:669553992e2b5d0289ce96cf924e5b6f5258335682ea15aa23959c744195e4e6", size = 34144 },
 ]
 
 [[package]]
@@ -1281,7 +1285,6 @@ source = { editable = "." }
 dependencies = [
     { name = "jinja2" },
     { name = "lxml" },
-    { name = "rdfproxy" },
     { name = "rich" },
     { name = "rich-argparse" },
 ]
@@ -1295,13 +1298,13 @@ dev = [
 examples = [
     { name = "fastapi", extra = ["standard"] },
     { name = "gitpython" },
+    { name = "rdfproxy" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "jinja2", specifier = ">=3.1.5" },
     { name = "lxml", specifier = ">=5.3.0" },
-    { name = "rdfproxy", git = "https://github.com/acdh-oeaw/rdfproxy?branch=prototype%2Fordering" },
     { name = "rich", specifier = ">=13.9.4" },
     { name = "rich-argparse", specifier = ">=1.6.0" },
 ]
@@ -1315,4 +1318,5 @@ dev = [
 examples = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.8" },
     { name = "gitpython", specifier = ">=3.1.44" },
+    { name = "rdfproxy", specifier = ">=0.6.0" },
 ]
