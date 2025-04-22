@@ -1,7 +1,7 @@
 from wisskas.cli.main import main
 
 
-input_args = ["-input", "tests/data/releven_assertions_20240821.xml"]
+input_args = ["tests/data/releven_assertions_20240821.xml"]
 
 
 def run_cli(*args):

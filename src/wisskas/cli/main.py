@@ -15,10 +15,9 @@ from wisskas.cli.paths import register_subcommand as paths_args
 def main(args=None):
     parser = argparse.ArgumentParser(formatter_class=RichHelpFormatter)
     parser.add_argument(
-        "-input",
+        "input",
         type=pathlib.Path,
-        default="tests/data/releven_assertions_20240821.xml",
-        help="a WissKI pathbuilder file",
+        help="a WissKI pathbuilder file (XML or JSON)",
     )
 
     subparsers = parser.add_subparsers(
@@ -71,14 +70,20 @@ def main(args=None):
         handlers=[RichHandler(rich_tracebacks=True)],
     )
 
+    logger = logging.getLogger(__name__)
+
     if args.input.suffix == ".json":
         with open(args.input) as j:
             xml = json.load(j)["xml"]
             args.input = args.input.with_suffix(".xml")
-            # exclusive creation
-            # TODO print informative message if file already exists
+            logger.info(
+                f"extracting Pathbuilder XML and writing it to '{args.input.name}'"
+            )
+            # exclusive creation -- fails if file already exists
             with open(args.input, "x") as x:
                 x.write(xml)
+            # TODO except FileExistsError:
+            # logger.warning("...")
 
     # call subcommand
     try:
