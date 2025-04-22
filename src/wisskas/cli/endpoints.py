@@ -58,6 +58,13 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
     )
 
     file_output.add_argument(
+        "-c",
+        "--counts-endpoint",
+        action="store_true",
+        help="generate a /counts endpoint that returns the result count of all generated endpoints",
+    )
+
+    file_output.add_argument(
         "--cors",
         nargs="*",
         default=["*"],
@@ -134,7 +141,11 @@ def main(args):
             print_code(query, "sparql")
 
     entrypoint = serialize_entrypoint(
-        endpoints, args.server_address, args.git_endpoint, {"origins": args.cors}
+        endpoints,
+        args.server_address,
+        args.git_endpoint,
+        args.counts_endpoint,
+        {"origins": args.cors},
     )
 
     if args.output_prefix and args.server_address:
