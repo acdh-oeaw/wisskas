@@ -10,7 +10,6 @@ requires-python = ">=3.11"
 dependencies = [
     "jinja2>=3.1.5",
     "lxml>=5.3.0",
-    "rdfproxy",
     "rich>=13.9.4",
     "rich-argparse>=1.6.0",
 ]
@@ -22,9 +21,6 @@ wisskas = "wisskas.cli.main:main"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv.sources]
-rdfproxy = { git = "https://github.com/acdh-oeaw/rdfproxy", branch = "prototype/ordering" }
-
 [dependency-groups]
 dev = [
     "ruff>=0.9.4",
@@ -34,4 +30,5 @@ dev = [
 examples = [
     "fastapi[standard]>=0.115.8",
     "gitpython>=3.1.44",
+    "rdfproxy>=0.6.0",
 ]
