@@ -37,13 +37,12 @@ PREFIX {{ prefix }}: <{{ uri }}>
     {%- for path in class.path_array -%}
       {%- if path is not none -%}
         {%- if loop.index0 is even -%}
-          ?{{- class.binding_vars[loop.index0 // 2] }} a {{ apply_prefixes(path) ~ '.\n' }}
+          ?{{- class.binding_vars[loop.index0 // 2] }} a {{ apply_prefixes(path) ~ ' .\n' }}
         {%- else -%}
-          ?{{- class.binding_vars[loop.index0 // 2] }} {{ apply_prefixes(path) }} ?{{ class.binding_vars[loop.index0 // 2 + 1] ~ '.\n' }}
+          ?{{- class.binding_vars[loop.index0 // 2] }} {{ apply_prefixes(path) }} ?{{ class.binding_vars[loop.index0 // 2 + 1] ~ ' .\n' }}
         {%- endif -%}
       {%- endif -%}
     {%- endfor -%}
-    {{ '\n' }}
     {%- for name, child in class.fields.items() -%}
       {%- if root.everything_optional or child.cardinality == -1 -%}
       {{- '\nOPTIONAL {\n' -}}
@@ -62,5 +61,6 @@ SELECT
 {{ select(root) }}
 
 WHERE {
+
 {{ where(root) }}
 }
