@@ -39,7 +39,7 @@ class WissKIPath:
 
         # TODO add to path instead?
         self.datatype_property = (
-            self.xml["datatype_property"]
+            PathElement(self.xml["datatype_property"].text)
             if self.xml["datatype_property"] != "empty"
             else None
         )
