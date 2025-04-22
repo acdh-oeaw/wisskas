@@ -66,6 +66,7 @@ def main(args=None):
 
     logging.basicConfig(
         level=max(10, 30 - 10 * args.verbose),
+        datefmt=" ",
         format="%(name)s: %(message)s",
         handlers=[RichHandler(rich_tracebacks=True)],
     )
