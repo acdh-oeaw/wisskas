@@ -31,7 +31,7 @@ class {{ class.class_name }}(BaseModel):
     {%- endif %}
 {% for fieldname, field in class.fields.items() %}
     {{ fieldname ~ ": "}}
-    {%- if field.binding and not field.class_name -%}
+    {%- if field.binding -%}
     Annotated[
     {%- endif -%}
     {%- if field.cardinality == -1 -%}
@@ -48,7 +48,7 @@ class {{ class.class_name }}(BaseModel):
     {%- if field.cardinality == -1 -%}
     ]
     {%- endif -%}
-    {%- if field.binding and not field.class_name -%}
+    {%- if field.binding -%}
       , SPARQLBinding("{{ field.binding }}")]{# TODO default value #}
     {%- endif -%}
     {%- if not is_grouped %} = None{%- endif -%}
