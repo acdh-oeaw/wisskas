@@ -29,9 +29,14 @@ def create_names(
     )
 
 
-def id_to_classname(path_id: str) -> str:
-    """Generate a valid Python class name from a WissKI path id"""
-    return path_id.replace("_", " ").title().replace(" ", "")
+def to_classname(text: str) -> str:
+    """Generate a valid Python class name from a string"""
+    return text.replace("_", " ").title().replace(" ", "")
+
+
+def to_fieldname(text: str) -> str:
+    """Generate a valid Python field name from a string"""
+    return text.replace("/", "").replace(" ", "_")
 
 
 def parse_endpointspec(pathid_endpointname: str) -> tuple[str, str]:
@@ -57,14 +62,14 @@ def parse_filterspec(filterspec: list[str]) -> dict[PathElement, list[str]]:
     }
 
 
-def path_to_camelcase(url_path):
+def path_to_camelcase(url_path) -> str:
     # or .title() on spaced string
     return "".join([s.capitalize() for s in split_url_path(url_path)])
 
 
-def path_to_filename(url_path):
+def path_to_filename(url_path) -> str:
     return "_".join(split_url_path(url_path))
 
 
-def split_url_path(url_path):
+def split_url_path(url_path) -> list[str]:
     return url_path.lstrip("/").split("/")

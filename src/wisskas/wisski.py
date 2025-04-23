@@ -4,7 +4,7 @@ import pathlib
 
 from lxml import etree, objectify
 
-from wisskas.string_utils import PathElement, id_to_classname
+from wisskas.string_utils import PathElement, to_classname
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +12,7 @@ WISSKI_TYPES = {
     # TODO add support for all Wisski field types: https://wiss-ki.eu/documentation/pathbuilder/configuration/lists
     "datetime": "datetime.datetime",
     "list_string": "list[str]",  # FIXME this doesn't get annotated properly, need to change the Type's cardinality instead
+    "geofield": "str",  # TODO
     "string": "str",
     "uri": "AnyUrl",
 }
@@ -33,6 +34,7 @@ class WissKIPath:
         ]
 
         self.id = self.xml["id"].text
+        self.description = self.xml["name"].text
         self.fields = {}
         self.parents = {}
         self.binding_vars = []
@@ -49,7 +51,9 @@ class WissKIPath:
         self.group_id = self.xml["group_id"] if self.xml["group_id"] != 0 else None
 
         # is_group is misleading, paths are groups if their fields isn't empty
-        self.class_name = id_to_classname(self.id) if self.xml["is_group"] else None
+        self.class_name = (
+            to_classname(self.description or self.id) if self.xml["is_group"] else None
+        )
 
         self.entity_reference = self.xml["fieldtype"] == "entity_reference"
 
