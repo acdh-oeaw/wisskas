@@ -30,22 +30,42 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
     )
 
     parser.add_argument(
-        "-ee",
-        "--endpoint-exclude-fields",
+        "-le",
+        "--listing-exclude-fields",
         nargs="+",
         metavar=("path_id[/endpoint/target/path]", "exclude_field"),
         action="append",
-        help="a path id for which to generate an endpoint, followed by 0 or more field paths that should be excluded from the endpoint return value. any fields not in this list will be included by default.",
+        help="a path id for which to generate a list/page endpoint, followed by 0 or more field paths that should be excluded from the endpoint return value. any fields not in this list will be included by default.",
         default=[],
     )
 
     parser.add_argument(
-        "-ei",
-        "--endpoint-include-fields",
+        "-ie",
+        "--item-exclude-fields",
+        nargs="+",
+        metavar=("path_id[/endpoint/target/path]", "exclude_field"),
+        action="append",
+        help="a path id for which to generate an item/detail endpoint, the name of the model field to filter for, followed by 0 or more field paths that should be excluded from the endpoint return value. any fields not in this list will be included by default.",
+        default=[],
+    )
+
+    parser.add_argument(
+        "-li",
+        "--listing-include-fields",
         nargs="+",
         metavar=("path_id[/endpoint/target/path]", "include_field"),
         action="append",
-        help="a path id for which to generate an endpoint, followed by 1 or more field paths that should be included in the endpoint return value.",
+        help="a path id for which to generate a list/page endpoint, followed by 1 or more field paths that should be included in the endpoint return value.",
+        default=[],
+    )
+
+    parser.add_argument(
+        "-ii",
+        "--item-include-fields",
+        nargs="+",
+        metavar=("path_id[/endpoint/target/path]", "include_field"),
+        action="append",
+        help="a path id for which to generate a item/detail endpoint, the name of the model field to filter for, followed by 1 or more field paths that should be included in the endpoint return value.",
         default=[],
     )
 
@@ -82,7 +102,7 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
     file_output.add_argument(
         "--git-endpoint",
         action="store_true",
-        help="whether to generate a git health check endpoint a /",
+        help="whether to generate a git health check endpoint at '/'",
     )
 
     return main
@@ -93,10 +113,10 @@ def main(args):
     args.prefix = dict(args.prefix)
     endpoints = {}
 
-    for path_id, *filters in args.endpoint_include_fields:
+    for path_id, *filters in args.listing_include_fields:
         if len(filters) == 0:
             raise Exception(
-                f"endpoint '{path_id}' is defined using --endpoint-include-fields but is missing any fields to include"
+                f"endpoint '{path_id}' is defined using --listing-include-fields but is missing any fields to include"
             )
         path_id, endpoint_path = parse_endpointspec(path_id)
 
@@ -108,7 +128,23 @@ def main(args):
             paths[path_id], filters, path_to_camelcase(endpoint_path)
         )
 
-    for path_id, *filters in args.endpoint_exclude_fields:
+    for path_id, key_field, *filters in args.item_include_fields:
+        if len(filters) == 0:
+            raise Exception(
+                f"endpoint '{path_id}' is defined using --item-include-fields but is missing any fields to include"
+            )
+        path_id, endpoint_path = parse_endpointspec(path_id)
+
+        if endpoint_path in endpoints:
+            raise RuntimeError(
+                f"Endpoint path {endpoint_path} is specified more than once"
+            )
+        endpoints[endpoint_path] = endpoint_include_fields(
+            paths[path_id], filters, path_to_camelcase(endpoint_path)
+        )
+        endpoints[endpoint_path].key_field = key_field
+
+    for path_id, *filters in args.listing_exclude_fields:
         path_id, endpoint_path = parse_endpointspec(path_id)
 
         if endpoint_path in endpoints:
@@ -120,6 +156,20 @@ def main(args):
             filters,
             path_to_camelcase(endpoint_path),
         )
+
+    for path_id, key_field, *filters in args.item_exclude_fields:
+        path_id, endpoint_path = parse_endpointspec(path_id)
+
+        if endpoint_path in endpoints:
+            raise RuntimeError(
+                f"Endpoint path {endpoint_path} is specified more than once"
+            )
+        endpoints[endpoint_path] = endpoint_exclude_fields(
+            paths[path_id],
+            filters,
+            path_to_camelcase(endpoint_path),
+        )
+        endpoints[endpoint_path].key_field = key_field
 
     def print_code(code, language="python"):
         rprint(Syntax(code, language, theme=args.color_theme), "\n")
@@ -134,7 +184,8 @@ def main(args):
 
         # this is the local filename
         root.filename = filename.rsplit("/", 1)[-1]
-        root.details = path.endswith("details")
+        if hasattr(root, "key_field"):
+            root.item_key = root.key_field
         root.everything_optional = args.everything_optional
 
         model = serialize_model(root)

@@ -10,9 +10,9 @@ def run_cli(*args):
 
 def test_cli_endpoints():
     """crash tests"""
-    run_cli("endpoints", "--endpoint-exclude-fields", "external_authority")
+    run_cli("endpoints", "--item-exclude-fields", "external_authority")
     run_cli(
-        "endpoints", "--endpoint-exclude-fields", "external_authority", "--git-endpoint"
+        "endpoints", "--item-exclude-fields", "external_authority", "--git-endpoint"
     )
 
 
