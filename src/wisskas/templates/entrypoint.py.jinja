@@ -1,3 +1,6 @@
+from os import path
+from typing import Annotated
+
 from fastapi import FastAPI, Query
 {%- if cors %}
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,9 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 {%- if git %}
 from git import Repo
 {%- endif %}
-from os import path
 from rdfproxy import Page, QueryParameters, SPARQLModelAdapter
-from typing import Annotated
 
 {% for endpoint in endpoints.values() -%}
 from {{ endpoint.filename }} import {{ endpoint.class_name }}
@@ -35,7 +36,8 @@ def version():
 {% endif %}
 
 def load_query(name):
-    return open(f"{path.dirname(path.realpath(__file__))}/{name}.rq").read().replace("\n ", " ")
+    with open(f"{path.dirname(path.realpath(__file__))}/{name}.rq") as query:
+        return query.read().replace("\n ", " ")
 
 {% for url, endpoint in endpoints.items() %}
 @app.get("{{ url }}")
