@@ -10,7 +10,7 @@ from git import Repo
 {%- endif %}
 from rdfproxy import Page, QueryParameters, SPARQLModelAdapter
 
-{% for endpoint in endpoints.values() -%}
+{% for endpoint in endpoints.values() | sort(attribute="filename") -%}
 from {{ endpoint.filename }} import {{ endpoint.class_name }}
 {% endfor %}
 
@@ -28,7 +28,7 @@ app.add_middleware(
 
 {%- if git %}
 # The automatic health check endpoint is /. The return code has to be 200 or 30x.
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def version():
     repo = Repo(search_parent_directories=True)
     return {"version": repo.git.describe(tags=True, dirty=True, always=True)}
