@@ -42,7 +42,7 @@ def load_query(name):
 {% for url, endpoint in endpoints | dictsort %}
 @app.get("{{ url }}")
 {%- if endpoint.item_key %}
-def {{endpoint.filename}}(unique_identifier: str) -> {{ endpoint.class_name }}:
+def {{endpoint.filename}}(id: str) -> {{ endpoint.class_name }}:
 {% else %}
 def {{endpoint.filename}}(params: Annotated[QueryParameters[{{ endpoint.class_name }}], Query()]) -> Page[{{ endpoint.class_name }}]:
 {% endif %}
@@ -54,7 +54,7 @@ def {{endpoint.filename}}(params: Annotated[QueryParameters[{{ endpoint.class_na
     )
 
 {% if endpoint.item_key %}
-    return adapter.get_detail(**{ "{{ endpoint.item_key }}": unique_identifier})
+    return adapter.get_detail(**{ "{{ endpoint.item_key }}": id})
 {% else %}
     return adapter.get_page(params)
 {% endif %}
