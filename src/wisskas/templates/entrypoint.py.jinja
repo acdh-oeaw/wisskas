@@ -64,9 +64,12 @@ def {{endpoint.filename}}(params: Annotated[QueryParameters[{{ endpoint.class_na
 {% if counts %}
 @app.get("/counts")
 def counts():
+    """Return item counts for all listing endpoints"""
     return {
-    {%- for url, endpoint in endpoints.items() %}
+    {%- for url, endpoint in endpoints | dictsort -%}
+        {%- if not endpoint.item_key %}
         "{{endpoint.filename}}": {{endpoint.filename}}(params=QueryParameters(size=1)).total,
+        {%- endif -%}
     {%- endfor %}
     }
 {% endif %}
