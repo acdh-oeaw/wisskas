@@ -39,7 +39,7 @@ def load_query(name):
     with open(f"{path.dirname(path.realpath(__file__))}/{name}.rq") as query:
         return query.read().replace("\n ", " ")
 
-{% for url, endpoint in endpoints.items() %}
+{% for url, endpoint in endpoints | dictsort %}
 @app.get("{{ url }}")
 {%- if endpoint.item_key %}
 def {{endpoint.filename}}(unique_identifier: str) -> {{ endpoint.class_name }}:
