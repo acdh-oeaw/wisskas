@@ -113,6 +113,13 @@ def main(args):
     args.prefix = dict(args.prefix)
     endpoints = {}
 
+    def add_endpoint(endpoint_path, endpoint):
+        if endpoint_path in endpoints:
+            raise RuntimeError(
+                f"Endpoint path {endpoint_path} is specified more than once"
+            )
+        endpoints[endpoint_path] = endpoint
+
     for path_id, *filters in args.listing_include_fields:
         if len(filters) == 0:
             raise Exception(
@@ -120,12 +127,11 @@ def main(args):
             )
         path_id, endpoint_path = parse_endpointspec(path_id)
 
-        if endpoint_path in endpoints:
-            raise RuntimeError(
-                f"Endpoint path {endpoint_path} is specified more than once"
-            )
-        endpoints[endpoint_path] = endpoint_include_fields(
-            paths[path_id], filters, path_to_camelcase(endpoint_path)
+        add_endpoint(
+            endpoint_path,
+            endpoint_include_fields(
+                paths[path_id], filters, path_to_camelcase(endpoint_path)
+            ),
         )
 
     for path_id, key_field, *filters in args.item_include_fields:
@@ -135,39 +141,36 @@ def main(args):
             )
         path_id, endpoint_path = parse_endpointspec(path_id)
 
-        if endpoint_path in endpoints:
-            raise RuntimeError(
-                f"Endpoint path {endpoint_path} is specified more than once"
-            )
-        endpoints[endpoint_path] = endpoint_include_fields(
-            paths[path_id], filters, path_to_camelcase(endpoint_path)
+        add_endpoint(
+            endpoint_path,
+            endpoint_include_fields(
+                paths[path_id], filters, path_to_camelcase(endpoint_path)
+            ),
         )
         endpoints[endpoint_path].key_field = key_field
 
     for path_id, *filters in args.listing_exclude_fields:
         path_id, endpoint_path = parse_endpointspec(path_id)
 
-        if endpoint_path in endpoints:
-            raise RuntimeError(
-                f"Endpoint path {endpoint_path} is specified more than once"
-            )
-        endpoints[endpoint_path] = endpoint_exclude_fields(
-            paths[path_id],
-            filters,
-            path_to_camelcase(endpoint_path),
+        add_endpoint(
+            endpoint_path,
+            endpoint_exclude_fields(
+                paths[path_id],
+                filters,
+                path_to_camelcase(endpoint_path),
+            ),
         )
 
     for path_id, key_field, *filters in args.item_exclude_fields:
         path_id, endpoint_path = parse_endpointspec(path_id)
 
-        if endpoint_path in endpoints:
-            raise RuntimeError(
-                f"Endpoint path {endpoint_path} is specified more than once"
-            )
-        endpoints[endpoint_path] = endpoint_exclude_fields(
-            paths[path_id],
-            filters,
-            path_to_camelcase(endpoint_path),
+        add_endpoint(
+            endpoint_path,
+            endpoint_exclude_fields(
+                paths[path_id],
+                filters,
+                path_to_camelcase(endpoint_path),
+            ),
         )
         endpoints[endpoint_path].key_field = key_field
 
