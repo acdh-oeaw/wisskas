@@ -1,20 +1,22 @@
 from os import path
 from typing import Annotated
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 {%- if cors %}
 from fastapi.middleware.cors import CORSMiddleware
-{%- endif -%}
+{%- endif %}
+from fastapi.responses import PlainTextResponse
 {%- if git %}
 from git import Repo
 {%- endif %}
 from rdfproxy import Page, QueryParameters, SPARQLModelAdapter
+from rdfproxy.utils.exceptions import NoResultsFound
 
 {% for endpoint in endpoints.values() | sort(attribute="filename") -%}
 from {{ endpoint.filename }} import {{ endpoint.class_name }}
 {% endfor %}
 
-app = FastAPI()
+app = FastAPI(debug=True)
 
 {% if cors -%}
 app.add_middleware(
@@ -38,6 +40,11 @@ def version():
 def load_query(name):
     with open(f"{path.dirname(path.realpath(__file__))}/{name}.rq") as query:
         return query.read().replace("\n ", " ")
+
+@app.exception_handler(NoResultsFound)
+def noresultsfound_exception_handler(_: Request, exc: NoResultsFound):
+    return PlainTextResponse(status_code=404, content=str(exc))
+    # content="\n".join(traceback.format_exception(exc))
 
 {% for url, endpoint in endpoints | dictsort %}
 @app.get("{{ url }}")
