@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "jinja2>=3.1.5",
     "lxml>=5.3.0",
+    "rdfproxy>=0.7.0",
     "rich>=13.9.4",
     "rich-argparse>=1.6.0",
 ]

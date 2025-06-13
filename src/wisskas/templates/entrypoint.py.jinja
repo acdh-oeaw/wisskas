@@ -54,7 +54,7 @@ def {{endpoint.filename}}(params: Annotated[QueryParameters[{{ endpoint.class_na
     )
 
 {% if endpoint.item_key %}
-    return adapter.get_detail(**{ "{{ endpoint.item_key }}": id})
+    return adapter.get_item(**{ "{{ endpoint.item_key }}": id})
 {% else %}
     return adapter.get_page(params)
 {% endif %}
