@@ -30,6 +30,14 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
     )
 
     parser.add_argument(
+        "-s",
+        "--page-size",
+        type=int,
+        help="default page size to use for listing endpoints (default: %(default)s)",
+        default=20,
+    )
+
+    parser.add_argument(
         "-le",
         "--listing-exclude-fields",
         nargs="+",
@@ -209,6 +217,7 @@ def main(args):
         args.git_endpoint,
         args.counts_endpoint,
         {"origins": args.cors},
+        args.page_size,
     )
 
     if args.server_address:

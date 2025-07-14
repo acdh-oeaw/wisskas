@@ -9,6 +9,7 @@ from fastapi.responses import PlainTextResponse
 {%- if git %}
 from git import Repo
 {%- endif %}
+from pydantic import Field
 from rdfproxy import Page, QueryParameters, SPARQLModelAdapter
 from rdfproxy.utils.exceptions import NoResultsFound
 
@@ -46,12 +47,16 @@ def noresultsfound_exception_handler(_: Request, exc: NoResultsFound):
     return PlainTextResponse(status_code=404, content=str(exc))
     # content="\n".join(traceback.format_exception(exc))
 
+
+class DefaultQueryParameters(QueryParameters):
+    size: int = Field(default={{ page_size }}, ge=1)
+
 {% for url, endpoint in endpoints | dictsort %}
 @app.get("{{ url }}")
 {%- if endpoint.item_key %}
 def {{endpoint.filename}}(id: str) -> {{ endpoint.class_name }}:
 {% else %}
-def {{endpoint.filename}}(params: Annotated[QueryParameters[{{ endpoint.class_name }}], Query()]) -> Page[{{ endpoint.class_name }}]:
+def {{endpoint.filename}}(params: Annotated[DefaultQueryParameters[{{ endpoint.class_name }}], Query()]) -> Page[{{ endpoint.class_name }}]:
 {% endif %}
     query = load_query("{{ endpoint.filename }}")
     adapter = SPARQLModelAdapter(
@@ -75,7 +80,7 @@ def counts():
     return {
     {%- for url, endpoint in endpoints | dictsort -%}
         {%- if not endpoint.item_key %}
-        "{{endpoint.filename}}": {{endpoint.filename}}(params=QueryParameters(size=1)).total,
+        "{{endpoint.filename}}": {{endpoint.filename}}(params=DefaultQueryParameters(size=1)).total,
         {%- endif -%}
     {%- endfor %}
     }
