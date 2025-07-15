@@ -77,6 +77,26 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         default=[],
     )
 
+    parser.add_argument(
+        "-mi",
+        "--manual-item",
+        nargs="+",
+        metavar=('"/pathname" ModelName id_field modelfile.py queryfile.rq'),
+        action="append",
+        help="add an item endpoint for an externally defined model/query to the entrypoint",
+        default=[],
+    )
+
+    parser.add_argument(
+        "-ml",
+        "--manual-listing",
+        nargs="+",
+        metavar=('"/pathname" ModelName modelfile.py queryfile.rq'),
+        action="append",
+        help="add a listing endpoint for an externally defined model/query to the entrypoint",
+        default=[],
+    )
+
     file_output = parser.add_argument_group(
         "File output options",
     )
@@ -210,6 +230,15 @@ def main(args):
             rprint(Rule(path))
             print_code(model)
             print_code(query, "sparql")
+
+    for path, modelname, id_field, modelfile, queryfile in args.manual_item:
+        # TODO implement
+        add_endpoint(path, None)
+        # TODO add key_field = id_field
+
+    for path, modelname, modelfile, queryfile in args.manual_listing:
+        # TODO implement
+        add_endpoint(path, None)
 
     entrypoint = serialize_entrypoint(
         endpoints,
