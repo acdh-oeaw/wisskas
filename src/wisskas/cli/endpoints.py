@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 from typing import Callable
 from rich import print as rprint
@@ -8,6 +9,8 @@ from wisskas.filter import endpoint_exclude_fields, endpoint_include_fields
 from wisskas.serialize import serialize_entrypoint, serialize_model, serialize_query
 from wisskas.string_utils import parse_endpointspec, path_to_camelcase, path_to_filename
 from wisskas.wisski import parse_paths
+
+logger = logging.getLogger(__name__)
 
 
 def register_subcommand(parser: ArgumentParser) -> Callable:
@@ -206,7 +209,7 @@ def main(args):
         rprint(Syntax(code, language, theme=args.color_theme), "\n")
 
     def dump_to_file(content, filename):
-        print(f"writing {filename}")
+        logger.info(f"writing '{filename}'")
         with open(filename, "w") as f:
             f.write(content)
 

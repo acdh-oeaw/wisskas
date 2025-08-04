@@ -57,18 +57,17 @@ def main(args=None):
     cli_output.add_argument(
         "-v",
         "--verbose",
-        action="count",
-        default=0,
-        help="Increase the verbosity of the logging output: default is WARNING, use -v for INFO, -vv for DEBUG",
+        action="store_true",
+        help="Increase the verbosity of the logging output: default is INFO, use -v DEBUG",
     )
 
     args = parser.parse_args(args)
 
     logging.basicConfig(
-        level=max(10, 30 - 10 * args.verbose),
+        level=10 if args.verbose else 20,
         datefmt=" ",
-        format="%(name)s: %(message)s",
-        handlers=[RichHandler(rich_tracebacks=True)],
+        format="%(name)s: %(message)s" if args.verbose else "%(message)s",
+        handlers=[RichHandler(rich_tracebacks=True, show_path=args.verbose)],
     )
 
     logger = logging.getLogger(__name__)
