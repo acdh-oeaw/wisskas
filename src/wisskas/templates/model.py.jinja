@@ -10,7 +10,7 @@ from typing import Annotated
     {%- endif -%}
   {% endfor %}
 
-{% set is_grouped = class.fields.values() | selectattr('cardinality', '==', -1) | first  %}
+{% set is_grouped = class.fields.values() | selectattr('cardinality', '==', -1) | first %}
 
 class {{ class.class_name }}(BaseModel):
     {%- if description %}
@@ -22,6 +22,9 @@ class {{ class.class_name }}(BaseModel):
         title="{{ class.name }}",
         {%- if is_grouped %}
         group_by="id",
+        {%- endif %}
+        {%- if class.orderable_fields %}
+        orderable_fields=["{{ class.orderable_fields | join('", "') }}"],
         {%- endif %}
     )
     {%- if class.root %}
@@ -49,9 +52,9 @@ class {{ class.class_name }}(BaseModel):
     ]
     {%- endif -%}
     {%- if field.binding -%}
-      , SPARQLBinding("{{ field.binding }}")]{# TODO default value #}
+      , SPARQLBinding("{{ field.binding }}")]
     {%- endif -%}
-    {%- if (root.everything_optional and field.cardinality != -1) or not is_grouped %} = None{%- endif -%}
+    {%- if root.everything_optional and field.cardinality != -1 and field.fields %} = None{%- endif -%}
 
 {%- endfor -%}
 {%- endmacro -%}

@@ -1,5 +1,6 @@
 import copy
 import logging
+from typing import Optional
 
 from wisskas.string_utils import (
     FILTER_PATH_SEPARATOR,
@@ -13,19 +14,45 @@ logger = logging.getLogger(__name__)
 
 
 class DummyRootPath(WissKIPath):
-    def __init__(self, root_classname, root = None):
+    def __init__(
+        self,
+        root_classname,
+        root=None,
+    ):
         self.path_array = []
         self.binding_vars = []
         self.fields = {root_classname: root}
         self.class_name = root_classname
 
 
-def endpoint_exclude_fields(root, exclude, root_classname):
-    return clone_exclude(DummyRootPath(root_classname, root), root_classname, exclude)
+def endpoint_exclude_fields(
+    root,
+    exclude,
+    root_classname,
+):
+    return clone_exclude(
+        DummyRootPath(
+            root_classname,
+            root,
+        ),
+        root_classname,
+        exclude,
+    )
 
 
-def endpoint_include_fields(root, include, root_classname):
-    return clone_include(DummyRootPath(root_classname, root), root_classname, include)
+def endpoint_include_fields(
+    root,
+    include,
+    root_classname,
+):
+    return clone_include(
+        DummyRootPath(
+            root_classname,
+            root,
+        ),
+        root_classname,
+        include,
+    )
 
 
 def handle_recursion(prefix):

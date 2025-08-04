@@ -52,7 +52,7 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         "-le",
         "--listing-exclude-fields",
         nargs="+",
-        metavar=("path_id[/endpoint/target/path]", "exclude_field"),
+        metavar=("path_id[/endpoint/target/path][?sort1,sort2,...]", "exclude_field"),
         action="append",
         help="a path id for which to generate a list/page endpoint, followed by 0 or more field paths that should be excluded from the endpoint return value. any fields not in this list will be included by default.",
         default=[],
@@ -72,7 +72,7 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         "-li",
         "--listing-include-fields",
         nargs="+",
-        metavar=("path_id[/endpoint/target/path]", "include_field"),
+        metavar=("path_id[/endpoint/target/path][?sort1,sort2,...]", "include_field"),
         action="append",
         help="a path id for which to generate a list/page endpoint, followed by 1 or more field paths that should be included in the endpoint return value.",
         default=[],
@@ -102,6 +102,7 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         "-ml",
         "--manual-listing",
         nargs="+",
+        # TODO add support for specifying orderable_fields
         metavar=('"/pathname" ModelName filename_prefix'),
         action="append",
         help="add a listing endpoint for an externally defined model/query to the entrypoint",
@@ -165,32 +166,38 @@ def main(args):
             raise Exception(
                 f"endpoint '{path_id}' is defined using --listing-include-fields but is missing any fields to include"
             )
-        path_id, endpoint_path = parse_endpointspec(path_id)
+        path_id, endpoint_path, orderable = parse_endpointspec(path_id)
 
         add_endpoint(
             endpoint_path,
             endpoint_include_fields(
-                paths[path_id], filters, path_to_camelcase(endpoint_path)
+                paths[path_id],
+                filters,
+                path_to_camelcase(endpoint_path),
             ),
         )
+        endpoints[endpoint_path].orderable_fields = orderable
 
     for path_id, key_field, *filters in args.item_include_fields:
         if len(filters) == 0:
             raise Exception(
                 f"endpoint '{path_id}' is defined using --item-include-fields but is missing any fields to include"
             )
-        path_id, endpoint_path = parse_endpointspec(path_id)
+        path_id, endpoint_path, orderable = parse_endpointspec(path_id)
 
         add_endpoint(
             endpoint_path,
             endpoint_include_fields(
-                paths[path_id], filters, path_to_camelcase(endpoint_path)
+                paths[path_id],
+                filters,
+                path_to_camelcase(endpoint_path),
             ),
         )
         endpoints[endpoint_path].key_field = key_field
+        endpoints[endpoint_path].orderable_fields = orderable
 
     for path_id, *filters in args.listing_exclude_fields:
-        path_id, endpoint_path = parse_endpointspec(path_id)
+        path_id, endpoint_path, orderable = parse_endpointspec(path_id)
 
         add_endpoint(
             endpoint_path,
@@ -200,9 +207,10 @@ def main(args):
                 path_to_camelcase(endpoint_path),
             ),
         )
+        endpoints[endpoint_path].orderable_fields = orderable
 
     for path_id, key_field, *filters in args.item_exclude_fields:
-        path_id, endpoint_path = parse_endpointspec(path_id)
+        path_id, endpoint_path, orderable = parse_endpointspec(path_id)
 
         add_endpoint(
             endpoint_path,
@@ -213,6 +221,7 @@ def main(args):
             ),
         )
         endpoints[endpoint_path].key_field = key_field
+        endpoints[endpoint_path].orderable_fields = orderable
 
     def print_code(code, language="python"):
         rprint(Syntax(code, language, theme=args.color_theme), "\n")
@@ -279,6 +288,7 @@ def main(args):
         if check_files_exist(filename_prefix):
             add_endpoint(path, DummyRootPath(modelname))
             endpoints[path].filename = copy_manual_endpoint_files(filename_prefix, path)
+            # TODO parse orderable_fields
         else:
             logger.warning(f"skipping manually defined listing endpoint {path}")
 

@@ -39,16 +39,22 @@ def to_fieldname(text: str) -> str:
     return text.replace("/", "").replace(" ", "_")
 
 
-def parse_endpointspec(pathid_endpointname: str) -> tuple[str, str]:
-    """Return the WissKI path id and endpoint URL from an endpoint spec string, e.g.:
-    'person' -> ('person', '/person')
-    'person/myendpoint/list' -> ('person', '/myendpoint/list')
+def parse_endpointspec(pathid_endpointname: str) -> tuple[str, str, list[str]]:
+    """Return the WissKI path id, endpoint URL and orderable fields from an endpoint
+    spec string, e.g.: 'person' -> ('person', '/person', [])
+    'person/myendpoint/list?sort1' -> ('person', '/myendpoint/list', ['sort1'])
     """
+    orderable = []
+
+    if "?" in pathid_endpointname:
+        pathid_endpointname, orderable = pathid_endpointname.split("?", 1)
+        orderable = orderable.split(",")
+
     if "/" in pathid_endpointname:
         pathid_endpointname, endpoint_path = pathid_endpointname.split("/", 1)
     else:
         endpoint_path = pathid_endpointname
-    return (pathid_endpointname, f"/{endpoint_path}")
+    return (pathid_endpointname, f"/{endpoint_path}", orderable)
 
 
 def parse_filterspec(filterspec: list[str]) -> dict[PathElement, list[str]]:
