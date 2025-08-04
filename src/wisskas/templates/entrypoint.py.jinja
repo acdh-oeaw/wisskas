@@ -64,6 +64,9 @@ def {{ endpoint.filename }}(params: Annotated[DefaultQueryParameters[{{ endpoint
         target="{{ backend_address }}",
         query=query,
         model={{ endpoint.class_name }},
+        {% if httpx_args -%}
+        httpx_aclient_params={{ httpx_args }}
+        {%- endif -%}
     )
 
 {%- if endpoint.item_key %}

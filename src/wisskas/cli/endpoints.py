@@ -49,6 +49,14 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
     )
 
     parser.add_argument(
+        "-t",
+        "--timeout",
+        nargs="?",
+        type=float,
+        help="timeout for the triple store queries (in seconds, default: use httpx AsyncClient default)",
+    )
+
+    parser.add_argument(
         "-le",
         "--listing-exclude-fields",
         nargs="+",
@@ -299,6 +307,7 @@ def main(args):
         args.counts_endpoint,
         {"origins": args.cors},
         args.page_size,
+        {"timeout": args.timeout} if args.timeout else None,
     )
 
     if args.server_address:

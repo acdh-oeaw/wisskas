@@ -19,6 +19,7 @@ def serialize_entrypoint(
     counts_endpoint=False,
     cors={},
     page_size=None,
+    httpx_args={},
 ) -> str:
     return serialize(
         "entrypoint.py",
@@ -29,6 +30,7 @@ def serialize_entrypoint(
             "git": git_endpoint,
             "counts": counts_endpoint,
             "page_size": page_size,
+            "httpx_args": httpx_args,
         },
     )
 

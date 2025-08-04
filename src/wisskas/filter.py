@@ -1,6 +1,5 @@
 import copy
 import logging
-from typing import Optional
 
 from wisskas.string_utils import (
     FILTER_PATH_SEPARATOR,
