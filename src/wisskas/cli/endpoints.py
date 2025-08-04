@@ -1,11 +1,19 @@
 import logging
+import pathlib
 from argparse import ArgumentParser
+from os.path import isfile
+from shutil import copyfile
 from typing import Callable
+
 from rich import print as rprint
 from rich.rule import Rule
 from rich.syntax import Syntax
 
-from wisskas.filter import endpoint_exclude_fields, endpoint_include_fields
+from wisskas.filter import (
+    DummyRootPath,
+    endpoint_exclude_fields,
+    endpoint_include_fields,
+)
 from wisskas.serialize import serialize_entrypoint, serialize_model, serialize_query
 from wisskas.string_utils import parse_endpointspec, path_to_camelcase, path_to_filename
 from wisskas.wisski import parse_paths
@@ -84,7 +92,7 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         "-mi",
         "--manual-item",
         nargs="+",
-        metavar=('"/pathname" ModelName id_field modelfile.py queryfile.rq'),
+        metavar=('"/pathname" ModelName id_field filename_prefix'),
         action="append",
         help="add an item endpoint for an externally defined model/query to the entrypoint",
         default=[],
@@ -94,7 +102,7 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         "-ml",
         "--manual-listing",
         nargs="+",
-        metavar=('"/pathname" ModelName modelfile.py queryfile.rq'),
+        metavar=('"/pathname" ModelName filename_prefix'),
         action="append",
         help="add a listing endpoint for an externally defined model/query to the entrypoint",
         default=[],
@@ -106,6 +114,7 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
     file_output.add_argument(
         "-o",
         "--output-prefix",
+        default="",
         help="write generated models and queries to disk, using this output filename prefix",
     )
 
@@ -213,8 +222,11 @@ def main(args):
         with open(filename, "w") as f:
             f.write(content)
 
+    def get_prefixed_filename(path):
+        return f"{args.output_prefix}_{path_to_filename(path)}"
+
     for path, root in endpoints.items():
-        filename = f"{args.output_prefix or ''}_{path_to_filename(path)}"
+        filename = get_prefixed_filename(path)
 
         # this is the local filename
         root.filename = filename.rsplit("/", 1)[-1]
@@ -234,14 +246,41 @@ def main(args):
             print_code(model)
             print_code(query, "sparql")
 
-    for path, modelname, id_field, modelfile, queryfile in args.manual_item:
-        # TODO implement
-        add_endpoint(path, None)
-        # TODO add key_field = id_field
+    suffixes = ["py", "rq"]
 
-    for path, modelname, modelfile, queryfile in args.manual_listing:
-        # TODO implement
-        add_endpoint(path, None)
+    def check_files_exist(prefix):
+        for suffix in suffixes:
+            if not isfile(f"{prefix}.{suffix}"):
+                logger.warning(
+                    f"file '{prefix}.{suffix}' is referred to by a manually defined endpoint but does not exist on disk"
+                )
+                return False
+        return True
+
+    def copy_manual_endpoint_files(prefix: str, path: str):
+        """Copy the file and return the (last element of the) target filename"""
+        target = get_prefixed_filename(path_to_filename(path))
+        for suffix in suffixes:
+            source = f"{prefix}.{suffix}"
+            filetarget = f"{target}.{suffix}"
+            logger.info(f"copying '{source}' to '{filetarget}'")
+            copyfile(source, filetarget)
+        return pathlib.Path(target).stem
+
+    for path, modelname, id_field, filename_prefix in args.manual_item:
+        if check_files_exist(filename_prefix):
+            add_endpoint(path, DummyRootPath(modelname))
+            endpoints[path].key_field = id_field
+            endpoints[path].filename = copy_manual_endpoint_files(filename_prefix, path)
+        else:
+            logger.warning(f"skipping manually defined item endpoint {path}")
+
+    for path, modelname, filename_prefix in args.manual_listing:
+        if check_files_exist(filename_prefix):
+            add_endpoint(path, DummyRootPath(modelname))
+            endpoints[path].filename = copy_manual_endpoint_files(filename_prefix, path)
+        else:
+            logger.warning(f"skipping manually defined listing endpoint {path}")
 
     entrypoint = serialize_entrypoint(
         endpoints,

@@ -13,10 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class DummyRootPath(WissKIPath):
-    def __init__(self, root_classname, root):
+    def __init__(self, root_classname, root = None):
         self.path_array = []
         self.binding_vars = []
         self.fields = {root_classname: root}
+        self.class_name = root_classname
 
 
 def endpoint_exclude_fields(root, exclude, root_classname):
