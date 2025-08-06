@@ -12,6 +12,7 @@ from git import Repo
 from pydantic import Field
 from rdfproxy import Page, QueryParameters, SPARQLModelAdapter
 from rdfproxy.utils.exceptions import NoResultsFound
+from rdfproxy.utils.utils import ModelSPARQLMap
 
 {% for endpoint in endpoints.values() | sort(attribute="filename") -%}
 from {{ endpoint.filename }} import {{ endpoint.class_name }}
@@ -51,15 +52,24 @@ def noresultsfound_exception_handler(_: Request, exc: NoResultsFound):
 class DefaultQueryParameters(QueryParameters):
     size: int = Field(default={{ page_size }}, ge=1)
 
+class FilterableQueryParameters(DefaultQueryParameters):
+    query: str | None = None
+
 {% for url, endpoint in endpoints | dictsort %}
 {%- if endpoint.item_key %}
 @app.get("{{ url }}")
 def {{ endpoint.filename }}(id: str) -> {{ endpoint.class_name }}:
 {% else %}
 @app.get("{{ url }}")
-def {{ endpoint.filename }}(params: Annotated[DefaultQueryParameters[{{ endpoint.class_name }}], Query()]) -> Page[{{ endpoint.class_name }}]:
+def {{ endpoint.filename }}(params: Annotated[{% if endpoint.filterable_fields %}Filterable{% else %}Default{% endif %}QueryParameters[{{ endpoint.class_name }}], Query()]) -> Page[{{ endpoint.class_name }}]:
 {% endif %}
     query = load_query("{{ endpoint.filename }}")
+    {%- if endpoint.filterable_fields %}
+    if params.query:
+        bindings = ModelSPARQLMap({{ endpoint.class_name }}, True)
+        fields = [ bindings[f] for f in {{ endpoint.filterable_fields }}]
+        query = query[:-1] + " || ".join(f'FILTER CONTAINS(?{f}, "{params.query}")' for f in fields) + "}"
+    {% endif %}
     adapter = SPARQLModelAdapter(
         target="{{ backend_address }}",
         query=query,

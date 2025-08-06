@@ -174,7 +174,7 @@ def main(args):
             raise Exception(
                 f"endpoint '{path_id}' is defined using --listing-include-fields but is missing any fields to include"
             )
-        path_id, endpoint_path, orderable = parse_endpointspec(path_id)
+        path_id, endpoint_path, extra = parse_endpointspec(path_id)
 
         add_endpoint(
             endpoint_path,
@@ -184,14 +184,15 @@ def main(args):
                 path_to_camelcase(endpoint_path),
             ),
         )
-        endpoints[endpoint_path].orderable_fields = orderable
+        endpoints[endpoint_path].orderable_fields = extra["orderable"]
+        endpoints[endpoint_path].filterable_fields = extra["filterable"]
 
     for path_id, key_field, *filters in args.item_include_fields:
         if len(filters) == 0:
             raise Exception(
                 f"endpoint '{path_id}' is defined using --item-include-fields but is missing any fields to include"
             )
-        path_id, endpoint_path, orderable = parse_endpointspec(path_id)
+        path_id, endpoint_path, extra = parse_endpointspec(path_id)
 
         add_endpoint(
             endpoint_path,
@@ -202,10 +203,11 @@ def main(args):
             ),
         )
         endpoints[endpoint_path].key_field = key_field
-        endpoints[endpoint_path].orderable_fields = orderable
+        endpoints[endpoint_path].orderable_fields = extra["orderable"]
+        endpoints[endpoint_path].filterable_fields = extra["filterable"]
 
     for path_id, *filters in args.listing_exclude_fields:
-        path_id, endpoint_path, orderable = parse_endpointspec(path_id)
+        path_id, endpoint_path, extra = parse_endpointspec(path_id)
 
         add_endpoint(
             endpoint_path,
@@ -215,10 +217,11 @@ def main(args):
                 path_to_camelcase(endpoint_path),
             ),
         )
-        endpoints[endpoint_path].orderable_fields = orderable
+        endpoints[endpoint_path].orderable_fields = extra["orderable"]
+        endpoints[endpoint_path].filterable_fields = extra["filterable"]
 
     for path_id, key_field, *filters in args.item_exclude_fields:
-        path_id, endpoint_path, orderable = parse_endpointspec(path_id)
+        path_id, endpoint_path, extra = parse_endpointspec(path_id)
 
         add_endpoint(
             endpoint_path,
@@ -229,7 +232,8 @@ def main(args):
             ),
         )
         endpoints[endpoint_path].key_field = key_field
-        endpoints[endpoint_path].orderable_fields = orderable
+        endpoints[endpoint_path].orderable_fields = extra["orderable"]
+        endpoints[endpoint_path].filterable_fields = extra["filterable"]
 
     def print_code(code, language="python"):
         rprint(Syntax(code, language, theme=args.color_theme), "\n")
@@ -296,7 +300,7 @@ def main(args):
         if check_files_exist(filename_prefix):
             add_endpoint(path, DummyRootPath(modelname))
             endpoints[path].filename = copy_manual_endpoint_files(filename_prefix, path)
-            # TODO parse orderable_fields
+            # TODO parse orderable_fields and filterable_fields
         else:
             logger.warning(f"skipping manually defined listing endpoint {path}")
 
