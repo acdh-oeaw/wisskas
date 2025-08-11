@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "jinja2>=3.1.5",
     "lxml>=5.3.0",
-    "rdfproxy>=0.8.0",
+    "rdfproxy>=0.9.0",
     "rich>=13.9.4",
     "rich-argparse>=1.6.0",
 ]
@@ -31,5 +31,5 @@ dev = [
 examples = [
     "fastapi[standard]>=0.115.8",
     "gitpython>=3.1.44",
-    "rdfproxy>=0.6.0",
+    "rdfproxy>=0.9.0",
 ]
