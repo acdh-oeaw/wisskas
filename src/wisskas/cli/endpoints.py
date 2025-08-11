@@ -45,7 +45,7 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         "--page-size",
         type=int,
         help="default page size to use for listing endpoints (default: %(default)s)",
-        default=20,
+        default=10,
     )
 
     parser.add_argument(
