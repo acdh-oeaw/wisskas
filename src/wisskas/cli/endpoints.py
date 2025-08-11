@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import sys
 from argparse import ArgumentParser
 from os.path import isfile
 from shutil import copyfile
@@ -126,6 +127,12 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         default="",
         help="write generated models and queries to disk, using this output filename prefix",
     )
+    file_output.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="overwrite output files if they already exist on disk (default: exit with an error when an existing file would be overwritten)",
+    )
 
     file_output.add_argument(
         "-a",
@@ -240,8 +247,14 @@ def main(args):
 
     def dump_to_file(content, filename):
         logger.info(f"writing '{filename}'")
-        with open(filename, "w") as f:
-            f.write(content)
+        try:
+            with open(filename, "w" if args.force else "x") as f:
+                f.write(content)
+        except FileExistsError:
+            logger.error(
+                f"file '{filename}' already exists on disk. Use the --force flag to overwrite any existing files"
+            )
+            sys.exit(1)
 
     def get_prefixed_filename(path):
         return f"{args.output_prefix}_{path_to_filename(path)}"
