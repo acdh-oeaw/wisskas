@@ -1,3 +1,6 @@
+{%- if logging -%}
+import logging
+{% endif -%}
 from os import path
 from typing import Annotated
 
@@ -18,17 +21,22 @@ from rdfproxy.utils.utils import ModelSPARQLMap
 from {{ endpoint.filename }} import {{ endpoint.class_name }}
 {% endfor %}
 
+{% if logging -%}
+logging.basicConfig(level=logging.DEBUG)
+{% endif -%}
+
 app = FastAPI(debug=True)
 
 {% if cors -%}
 app.add_middleware(
     CORSMiddleware,
-    allow_origins={{ cors.origins | default(["*"], true) }},
+    allow_origins={{ cors.origins | default(["*"], true) | tojson }},
     allow_credentials=True,
-    allow_methods={{ cors.methods | default(["*"], true) }},
-    allow_headers={{ cors.headers | default(["*"], true) }},
+    allow_methods={{ cors.methods | default(["*"], true) | tojson }},
+    allow_headers={{ cors.headers | default(["*"], true) | tojson }},
 )
-{% endif -%}
+
+{% endif %}
 
 {%- if git %}
 # The automatic health check endpoint is /. The return code has to be 200 or 30x.
@@ -36,12 +44,12 @@ app.add_middleware(
 def version():
     repo = Repo(search_parent_directories=True)
     return {"version": repo.git.describe(tags=True, dirty=True, always=True)}
-
 {% endif %}
 
 def load_query(name):
     with open(f"{path.dirname(path.realpath(__file__))}/{name}.rq") as query:
         return query.read().replace("\n ", " ")
+
 
 @app.exception_handler(NoResultsFound)
 def noresultsfound_exception_handler(_: Request, exc: NoResultsFound):

@@ -161,6 +161,12 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         help="whether to generate a git health check endpoint at '/'",
     )
 
+    file_output.add_argument(
+        "--logging",
+        action="store_true",
+        help="print log messages during runtime",
+    )
+
     return main
 
 
@@ -325,6 +331,7 @@ def main(args):
         {"origins": args.cors},
         args.page_size,
         {"timeout": args.timeout} if args.timeout else None,
+        args.logging,
     )
 
     if args.server_address:

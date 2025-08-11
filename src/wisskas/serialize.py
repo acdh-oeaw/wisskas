@@ -20,6 +20,7 @@ def serialize_entrypoint(
     cors={},
     page_size=None,
     httpx_args={},
+    logging=False,
 ) -> str:
     return serialize(
         "entrypoint.py",
@@ -31,6 +32,7 @@ def serialize_entrypoint(
             "counts": counts_endpoint,
             "page_size": page_size,
             "httpx_args": httpx_args,
+            "logging": logging,
         },
     )
 
