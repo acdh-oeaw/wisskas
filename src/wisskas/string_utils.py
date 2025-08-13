@@ -7,7 +7,9 @@ class PathElement:
 
     Can be used for any string, not just RDF predicates."""
 
-    def __init__(self, entity: str):
+    def __init__(self, entity: str = ""):
+        self.count = entity.startswith("#")
+        entity = entity[1 if self.count else 0 :]
         self.inverted = entity.startswith("^")
         self.entity = entity[1 if self.inverted else 0 :]
 
@@ -83,7 +85,6 @@ def parse_filterspec(filterspec: list[str]) -> dict[PathElement, list[str]]:
     """['a', 'b.c', 'd.e', 'd.f.g'] -> {'a': [], 'b': [['c']], 'd': [['e'], ['f.g']]}"""
     split = [i.split(FILTER_PATH_SEPARATOR, 1) for i in filterspec]
     prefixes = set(p for p, *_ in split)
-    # TODO handle * and ** here, or further up?
     return {
         PathElement(p): [r[1] for r in split if r[0] == p and len(r) > 1]
         for p in prefixes

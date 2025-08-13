@@ -142,6 +142,9 @@ def create_clone(
     for key in filters:
         if key.inverted:
             raise RuntimeError("not implemented yet")
+        elif key.count:
+            # TODO check no children
+            pass
         else:
             key = key.entity
             # TODO warn about invalid/redundant combinations
@@ -234,7 +237,12 @@ def clone_include(
     )
     debug_filter(clone, f"raw include {include}", depth)
     debug_filter(clone, f"parsed includes {includes}", depth)
-    if "**" in include or "%%" in include:
+    if include == "#":
+        clone.fields = {}
+        clone.count = True
+        clone.cardinality = 1
+        clone.type = "int"
+    elif "**" in include or "%%" in include:
         clone.fields = {
             name: clone_include(
                 clone,
@@ -249,7 +257,7 @@ def clone_include(
         }
     else:
         # TODO handle inverted paths
-        includes = {a.entity: b for a, b in includes.items()}
+        includes = {a.entity: "#" if a.count else b for a, b in includes.items()}
         clone.fields = {
             name: clone_include(
                 clone,
@@ -260,10 +268,10 @@ def clone_include(
                 depth + 1,
                 resolve_entity_references and "%" not in include,
             )
-            for name in clone.fields.keys()
+            for name in clone.fields
             if "*" in include or "%" in include or name in includes
         }
-    if len(clone.fields) == 0 and not clone.datatype_property:
+    if len(clone.fields) == 0 and not clone.datatype_property and not clone.type:
         debug_filter(clone, "class is down to 0 fields", depth)
         clone.type = WISSKI_TYPES["uri"]
     else:

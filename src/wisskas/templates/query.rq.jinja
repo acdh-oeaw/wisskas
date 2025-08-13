@@ -44,12 +44,22 @@ PREFIX {{ prefix }}: <{{ uri }}>
       {%- endif -%}
     {%- endfor -%}
     {%- for name, child in class.fields.items() -%}
-      {%- if root.everything_optional or child.cardinality == -1 -%}
-      {{- '\nOPTIONAL {\n' -}}
-      {%- endif -%}
-      {{- where(child) -}}
-      {%- if root.everything_optional or child.cardinality == -1 -%}
-        {{- '}\n' -}}
+      {%- if child.count -%}
+        { SELECT (COUNT(?{{ child.binding_vars[-1]}}) AS ?{{ child.binding_vars[-1] }}) ?{{ class.binding_vars[-1] }} WHERE {
+        {%- filter indent(indent, true) -%}
+        {{- '\n' -}}
+        {{- where(child) -}}
+        {%- endfilter -%}
+        } GROUP BY ?{{ class.binding_vars[-1] }}
+        {{- ' }\n' -}}
+      {%- else -%}
+        {%- if root.everything_optional or child.cardinality == -1 -%}
+          {{- '\nOPTIONAL {\n' -}}
+        {%- endif -%}
+        {{- where(child) -}}
+        {%- if root.everything_optional or child.cardinality == -1 -%}
+          {{- '}\n' -}}
+        {%- endif -%}
       {%- endif -%}
     {%- endfor -%}
   {%- endfilter -%}
