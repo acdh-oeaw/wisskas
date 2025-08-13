@@ -60,7 +60,7 @@ def handle_recursion(prefix):
 
 
 def debug(task, path, msg, depth):
-    logger.debug(f"{' ' * 2 * depth}{task} {path.id}: {msg}")
+    logger.debug(f"{' ' * 2 * depth}{task} '{path.id}': {msg}")
 
 
 def debug_clone(path, msg, depth=0):
@@ -161,7 +161,7 @@ def create_clone(
                     break
             if not exists:
                 logger.warning(
-                    f"cloning {clone.id} unknown field specified in include/exclude list at {FILTER_PATH_SEPARATOR.join(prefix[1:] or ['the top level'])}: '{key}'"
+                    f"cloning '{clone.id}': unknown field specified in include/exclude list at {FILTER_PATH_SEPARATOR.join(prefix[1:] or ['the top level'])}: '{key}'"
                 )
     return (clone, filters)
 

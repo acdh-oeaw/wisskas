@@ -11,6 +11,16 @@ class PathElement:
         self.inverted = entity.startswith("^")
         self.entity = entity[1 if self.inverted else 0 :]
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__)
+            and self.entity == other.entity
+            and self.inverted == other.inverted
+        )
+
+    def __hash__(self):
+        return self.__str__().__hash__()
+
     def __repr__(self):
         return f"PathElement('{str(self)}')"
 
