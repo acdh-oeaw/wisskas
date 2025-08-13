@@ -78,6 +78,7 @@ def create_clone(
     prefix,
     used_names,
     depth=0,
+    resolve_entity_references=True,
 ) -> tuple[WissKIPath, dict[PathElement, list[str]]]:
     # shallow copy
     clone = copy.copy(parent.fields[fieldname])
@@ -93,7 +94,7 @@ def create_clone(
 
     varnames = copy.copy(parent.binding_vars) if parent.binding_vars else [fieldname]
 
-    if clone.entity_reference:
+    if clone.entity_reference and resolve_entity_references:
         debug_clone(clone, f"entity reference to '{clone.entity_reference.id}'", depth)
         clone.fields = clone.entity_reference.fields
         clone.class_name = f"{parent.class_name}_{clone.entity_reference.class_name}"
@@ -136,14 +137,16 @@ def create_clone(
     debug_clone(clone, f"path {clone.path_array}", depth)
     debug_clone(clone, f"binding vars {clone.binding_vars}", depth)
 
+    # parse and validate the filterspec, does not actually apply it
     filters = parse_filterspec(filterspec)
     for key in filters:
         if key.inverted:
             raise RuntimeError("not implemented yet")
         else:
             key = key.entity
-            if key == "*" or key == "**":
-                if key == "*" and len(clone.fields) == 0:
+            # TODO warn about invalid/redundant combinations
+            if key in ["*", "**", "%", "%%"]:
+                if len(key) == 1 and len(clone.fields) == 0:
                     logger.warning(
                         f"found '{key}' at {'.'.join(prefix[1:])} even though there are no fields"
                     )
@@ -164,10 +167,22 @@ def create_clone(
 
 
 def clone_exclude(
-    parent: WissKIPath, fieldname: str, exclude, prefix=[], used_names=set(), depth=0
+    parent: WissKIPath,
+    fieldname: str,
+    exclude,
+    prefix=[],
+    used_names=set(),
+    depth=0,
+    resolve_entity_references=True,
 ) -> WissKIPath:
     clone, excludes = create_clone(
-        parent, fieldname, exclude, prefix, used_names, depth
+        parent,
+        fieldname,
+        exclude,
+        prefix,
+        used_names,
+        depth,
+        resolve_entity_references,
     )
     debug_filter(clone, f"raw exclude {exclude}")
     debug_filter(clone, f"parsed excludes {excludes}")
@@ -180,11 +195,22 @@ def clone_exclude(
         clone.fields = {}
         # clone.datatype_property = None
         return clone
+
+    if "%" in exclude:
+        resolve_entity_references = False
+
+    excludes = {a.entity: b for a, b in excludes.items()}
+
     try:
-        excludes = {a.entity: b for a, b in excludes.items()}
         clone.fields = {
             name: clone_exclude(
-                clone, name, excludes.get(f.id, []), prefix, used_names, depth + 1
+                clone,
+                name,
+                excludes.get(f.id, []),
+                prefix,
+                used_names,
+                depth + 1,
+                resolve_entity_references,
             )
             for name, f in clone.fields.items()
             if excludes.get(f.id, None) != []
@@ -195,16 +221,30 @@ def clone_exclude(
 
 
 def clone_include(
-    parent: WissKIPath, fieldname: str, include, prefix=[], used_names=set(), depth=0
+    parent: WissKIPath,
+    fieldname: str,
+    include,
+    prefix=[],
+    used_names=set(),
+    depth=0,
+    resolve_entity_references=True,
 ) -> WissKIPath:
     clone, includes = create_clone(
-        parent, fieldname, include, prefix, used_names, depth
+        parent, fieldname, include, prefix, used_names, depth, resolve_entity_references
     )
     debug_filter(clone, f"raw include {include}", depth)
     debug_filter(clone, f"parsed includes {includes}", depth)
-    if "**" in include:
+    if "**" in include or "%%" in include:
         clone.fields = {
-            name: clone_include(clone, name, ["**"], prefix, used_names)
+            name: clone_include(
+                clone,
+                name,
+                ["**"],
+                prefix,
+                used_names,
+                depth + 1,
+                resolve_entity_references and "**" in include,
+            )
             for name in clone.fields.keys()
         }
     else:
@@ -212,10 +252,16 @@ def clone_include(
         includes = {a.entity: b for a, b in includes.items()}
         clone.fields = {
             name: clone_include(
-                clone, name, includes.get(name, []), prefix, used_names, depth + 1
+                clone,
+                name,
+                includes.get(name, []),
+                prefix,
+                used_names,
+                depth + 1,
+                resolve_entity_references and "%" not in include,
             )
             for name in clone.fields.keys()
-            if "*" in include or name in includes
+            if "*" in include or "%" in include or name in includes
         }
     if len(clone.fields) == 0 and not clone.datatype_property:
         debug_filter(clone, "class is down to 0 fields", depth)
