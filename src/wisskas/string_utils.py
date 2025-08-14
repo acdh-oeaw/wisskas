@@ -3,15 +3,21 @@ FILTER_PATH_INVERSION = "^"
 
 
 class PathElement:
-    """Helper class for handling inversions marked by a leading '^'.
+    """Helper class for handling paths with optional semantic prefixes, in the following order:
+
+    - inversion marked by a leading '^'.
+    - count marked by a trailing '#'
+    - distinct marked by a trailing '!'
 
     Can be used for any string, not just RDF predicates."""
 
     def __init__(self, entity: str = ""):
-        self.count = entity.startswith("#")
-        entity = entity[1 if self.count else 0 :]
         self.inverted = entity.startswith("^")
         self.entity = entity[1 if self.inverted else 0 :]
+        self.distinct = self.entity.endswith("!")
+        self.entity = self.entity[: -1 if self.distinct else None]
+        self.count = self.entity.endswith("#")
+        self.entity = self.entity[: -1 if self.count else None]
 
     def __eq__(self, other):
         return (

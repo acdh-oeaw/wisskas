@@ -19,6 +19,7 @@ WissKI pathbuilder defines (nested) models that are linked to RDF classes. By al
 
 ```bash
 INPUT_FILE="pathbuilder_wisski.xml"
+
 uv run wisskas $INPUT_FILE paths --flat
 uv run wisskas $INPUT_FILE paths --flat g_publication
 uv run wisskas $INPUT_FILE paths --flat g_external_authority
@@ -28,7 +29,8 @@ uv run wisskas $INPUT_FILE paths --nested
 uv run wisskas $INPUT_FILE paths --nested g_publication
 uv run wisskas $INPUT_FILE paths --nested --all
 
-# generate paths
+
+# generate models and queries
 
 # g_person entity and all its direct fields
 uv run wisskas $INPUT_FILE endpoints --listing-include g_person '*'
@@ -41,4 +43,7 @@ uv run wisskas $INPUT_FILE endpoints --listing-include g_person '%%'
 
 # same, but selectively cross one entity boundary
 uv run wisskas $INPUT_FILE endpoints --listing-include g_person '%%' 'g_person_id_assignment.g_person_id_assignment_by.*'
+
+# list all persons with their display name, number of id assignments, and distinct number of name assertions
+uv run wisskas $INPUT_FILES endpoints -li g_person 'person_display_name' 'person_id_assignment#' 'person_name_of_person_assertion#!'
 ```

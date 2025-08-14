@@ -138,7 +138,9 @@ def create_clone(
     debug_clone(clone, f"binding vars {clone.binding_vars}", depth)
 
     # parse and validate the filterspec, does not actually apply it
-    filters = parse_filterspec(filterspec)
+    filters = (
+        [] if isinstance(filterspec, PathElement) else parse_filterspec(filterspec)
+    )
     for key in filters:
         if key.inverted:
             raise RuntimeError("not implemented yet")
@@ -146,10 +148,9 @@ def create_clone(
             # TODO check no children
             pass
         else:
-            key = key.entity
             # TODO warn about invalid/redundant combinations
-            if key in ["*", "**", "%", "%%"]:
-                if len(key) == 1 and len(clone.fields) == 0:
+            if key.entity in ["*", "**", "%", "%%"]:
+                if len(key.entity) == 1 and len(clone.fields) == 0:
                     logger.warning(
                         f"found '{key}' at {'.'.join(prefix[1:])} even though there are no fields"
                     )
@@ -158,7 +159,7 @@ def create_clone(
                 continue
             exists = False
             for f in clone.fields.values():
-                if f.id == key:
+                if f.id == key.entity:
                     debug_clone(clone, f"found field '{key}'", depth)
                     exists = True
                     break
@@ -237,11 +238,13 @@ def clone_include(
     )
     debug_filter(clone, f"raw include {include}", depth)
     debug_filter(clone, f"parsed includes {includes}", depth)
-    if include == "#":
+    if isinstance(include, PathElement):
         clone.fields = {}
-        clone.count = True
-        clone.cardinality = 1
-        clone.type = "int"
+        clone.distinct = include.distinct
+        if include.count:
+            clone.count = include.count
+            clone.cardinality = 1
+            clone.type = "int"
     elif "**" in include or "%%" in include:
         clone.fields = {
             name: clone_include(
@@ -253,11 +256,13 @@ def clone_include(
                 depth + 1,
                 resolve_entity_references and "**" in include,
             )
-            for name in clone.fields.keys()
+            for name in clone.fields
         }
     else:
         # TODO handle inverted paths
-        includes = {a.entity: "#" if a.count else b for a, b in includes.items()}
+        includes = {
+            a.entity: a if a.count or a.distinct else b for a, b in includes.items()
+        }
         clone.fields = {
             name: clone_include(
                 clone,

@@ -9,7 +9,7 @@ PREFIX {{ prefix }}: <{{ uri }}>
 
 {{- '?' ~ class.binding_vars[-1] -}}
   {%- for name, child in class.fields.items() %}
-{{ select(child) -}}
+    {{- '\n' ~ select(child) -}}
   {% endfor -%}
 
 {%- endfilter -%}
@@ -45,7 +45,7 @@ PREFIX {{ prefix }}: <{{ uri }}>
     {%- endfor -%}
     {%- for name, child in class.fields.items() -%}
       {%- if child.count -%}
-        { SELECT (COUNT(?{{ child.binding_vars[-1]}}) AS ?{{ child.binding_vars[-1] }}) ?{{ class.binding_vars[-1] }} WHERE {
+        { SELECT (COUNT({%- if child.distinct -%}DISTINCT {% endif -%}?{{ child.binding_vars[-1]}}) AS ?{{ child.binding_vars[-1] }}) ?{{ class.binding_vars[-1] }} WHERE {
         {%- filter indent(indent, true) -%}
         {{- '\n' -}}
         {{- where(child) -}}
