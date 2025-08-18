@@ -76,8 +76,8 @@ def {{ endpoint.filename }}(params: Annotated[{% if endpoint.filterable_fields %
     if params.query:
         bindings = ModelSPARQLMap({{ endpoint.class_name }}, True)
         fields = [ bindings[f] for f in {{ endpoint.filterable_fields }}]
-        query = query[:-1] + " || ".join(f'FILTER CONTAINS(?{f}, "{params.query}")' for f in fields) + "}"
-    {% endif %}
+        query = query[:-2] + " FILTER ( " + " || ".join(f'CONTAINS(?{f}, "{q}")' for f in fields for q in params.query.split(' ')) + ") }"
+    {%- endif %}
     adapter = SPARQLModelAdapter(
         target="{{ backend_address }}",
         query=query,
