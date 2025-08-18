@@ -45,13 +45,15 @@ PREFIX {{ prefix }}: <{{ uri }}>
     {%- endfor -%}
     {%- for name, child in class.fields.items() -%}
       {%- if child.count -%}
-        { SELECT (COUNT({%- if child.distinct -%}DISTINCT {% endif -%}?{{ child.binding_vars[-1]}}) AS ?{{ child.binding_vars[-1] }}) ?{{ class.binding_vars[-1] }} WHERE {
+        OPTIONAL { SELECT (COUNT({%- if child.distinct -%}DISTINCT {% endif -%}?{{ child.binding_vars[-1]}}) AS ?{{ child.binding_vars[-1] }}_count) ?{{ class.binding_vars[-1] }} WHERE {
         {%- filter indent(indent, true) -%}
         {{- '\n' -}}
         {{- where(child) -}}
         {%- endfilter -%}
         } GROUP BY ?{{ class.binding_vars[-1] }}
         {{- ' }\n' -}}
+        BIND (COALESCE(?{{ child.binding_vars[-1] }}_count, 0) AS ?{{ child.binding_vars[-1] }})
+        {{- '\n\n' -}}
       {%- else -%}
         {%- if root.everything_optional or child.cardinality == -1 -%}
           {{- '\nOPTIONAL {\n' -}}

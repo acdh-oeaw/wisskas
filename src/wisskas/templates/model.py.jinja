@@ -47,7 +47,7 @@ class {{ class.class_name }}(BaseModel):
     {%- else -%}
     ????
     {% endif %}
-    {%- if (root.everything_optional and field.cardinality != -1) or not is_grouped %} | None{% endif %}
+    {%- if (root.everything_optional and field.cardinality != -1 and not field.count) or not is_grouped %} | None{% endif %}
     {%- if field.cardinality == -1 -%}
     ]
     {%- endif -%}
