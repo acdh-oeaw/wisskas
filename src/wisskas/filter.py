@@ -174,7 +174,7 @@ def clone_exclude(
     fieldname: str,
     exclude,
     prefix=[],
-    used_names=set(),
+    used_names=dict(),
     depth=0,
     resolve_entity_references=True,
 ) -> WissKIPath:
@@ -228,7 +228,7 @@ def clone_include(
     fieldname: str,
     include,
     prefix=[],
-    used_names=set(),
+    used_names=dict(),
     depth=0,
     resolve_entity_references=True,
 ) -> WissKIPath:
