@@ -36,10 +36,19 @@ class PathElement:
         return ("^" if self.inverted else "") + self.entity
 
 
-def create_names(
-    prefix: str | list[str], postfix: str, used_names=set(), n=1
-) -> list[str]:
-    # TODO check if already in used_names
+def generate_abbreviation(name, used_abbreviations):
+    abbr = "".join(word[0] for word in name.split("_"))
+    return name if name in used_abbreviations else abbr
+
+
+def get_abbreviation(name: str, used_abbreviations: dict[str, str]):
+    if name not in used_abbreviations:
+        used_abbreviations[name] = generate_abbreviation(name, used_abbreviations)
+    return used_abbreviations[name]
+
+
+def create_names(prefix: str, postfix: str, used_names=dict(), n=1) -> list[str]:
+    prefix = get_abbreviation(prefix, used_names)
     return (
         []
         if n == 0
