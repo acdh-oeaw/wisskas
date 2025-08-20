@@ -145,7 +145,6 @@ def create_clone(
         if key.inverted:
             raise RuntimeError("not implemented yet")
         elif key.count:
-            # TODO check no children
             pass
         else:
             # TODO warn about invalid/redundant combinations

@@ -87,8 +87,8 @@ def parse_endpointspec(pathid_endpointname: str) -> tuple[str, str, dict]:
     )
 
 
-def parse_filterspec(filterspec: list[str]) -> dict[PathElement, list[str]]:
-    """['a', 'b.c', 'd.e', 'd.f.g'] -> {'a': [], 'b': [['c']], 'd': [['e'], ['f.g']]}"""
+def parse_filterspec(filterspec: list[str]) -> dict[PathElement, list[str | None]]:
+    """['a', 'b.c', 'd.e', 'd.f.g', 'h!.i'] -> {'a': [None], 'b': [['c']], 'd': [['e'], ['f.g']], 'h': [None, 'i']}"""
     split = [i.split(FILTER_PATH_SEPARATOR, 1) for i in filterspec]
     prefixes = set(p for p, *_ in split)
     return {

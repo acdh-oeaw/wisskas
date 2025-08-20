@@ -27,10 +27,10 @@ class {{ class.class_name }}(BaseModel):
         orderable_fields=["{{ class.orderable_fields | join('", "') }}"],
         {%- endif %}
     )
-    {%- if class.root %}
+    {%- if is_grouped and not class.root -%}{# model needs it (if this model exists, so can be none) #}
+    id: Annotated[AnyUrl | None, SPARQLBinding("{{ class.binding }}")] = {% if class.include_id %}None{% else %}Field(default=None, exclude=True){% endif %}
+    {%- elif class.root or class.include_id %}{# non-grouped, i.e. basic nested model #}
     id: Annotated[AnyUrl, SPARQLBinding("{{ class.binding }}")]
-    {%- else %}
-    id: Annotated[AnyUrl | None, SPARQLBinding("{{ class.binding }}")] = None{#Field(default=None, exclude={% if is_grouped %}False{% else %}False{% endif %})#}
     {%- endif %}
 {% for fieldname, field in class.fields.items() %}
     {{ fieldname ~ ": "}}
