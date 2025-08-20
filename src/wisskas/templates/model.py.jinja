@@ -20,6 +20,7 @@ class {{ class.class_name }}(BaseModel):
     {%- endif %}
     model_config = ConfigDict(
         title="{{ class.name }}",
+        enforce_grouping_consistency=False,
         {%- if is_grouped %}
         group_by="id",
         {%- endif %}
