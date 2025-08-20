@@ -21,6 +21,7 @@ class {{ class.class_name }}(BaseModel):
     model_config = ConfigDict(
         title="{{ class.name }}",
         {%- if is_grouped %}
+        enforce_grouping_consistency=False,
         group_by="id",
         {%- endif %}
         {%- if class.orderable_fields %}

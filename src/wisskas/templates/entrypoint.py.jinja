@@ -102,7 +102,7 @@ def counts():
     return {
     {%- for url, endpoint in endpoints | dictsort -%}
         {%- if not endpoint.item_key %}
-        "{{ endpoint.filename }}": {{ endpoint.filename }}(params=FilterableQueryParameters(size=1)).total,
+        "{{ url }}": {{ endpoint.filename }}(params=FilterableQueryParameters(size=1)).total,
         {%- endif -%}
     {%- endfor %}
     }
