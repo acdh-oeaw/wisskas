@@ -32,17 +32,28 @@ PREFIX {{ prefix }}: <{{ uri }}>
 
 {%- endmacro -%}
 
+{%- macro path_query(path_array, binding_vars) -%}{# chop off two elements #}
+  {%- if path_array | first is not none -%}
+    ?{{- binding_vars[0] }} a {{ apply_prefixes(path_array[0]) }}
+  {%- endif -%}
+  {%- if path_array | length > 1 and path_array[1] is not none -%}
+    {%- if path_array | first is not none -%}
+      {{- ';\n' ~ (' ' * (binding_vars[0] | length + 4)) ~ apply_prefixes(path_array[1]) }} ?{{ binding_vars[1] }}
+    {%- else -%}
+      ?{{- binding_vars[0] }} {{ apply_prefixes(path_array[1]) }} ?{{ binding_vars[1] }}
+    {%- endif -%}
+  {%- endif -%}
+  {%- if path_array | first is not none or path_array[1] is not none -%}
+    {{- ' .\n' -}}
+  {%- endif -%}
+  {%- if path_array | length > 2 -%}
+    {{- path_query(path_array[2:], binding_vars[1:]) -}}
+  {%- endif -%}
+{%- endmacro -%}
+
 {%- macro where(class) -%}
   {%- filter indent(indent, true) -%}
-    {%- for path in class.path_array -%}
-      {%- if path is not none -%}
-        {%- if loop.index0 is even -%}
-          ?{{- class.binding_vars[loop.index0 // 2] }} a {{ apply_prefixes(path) ~ ' .\n' }}
-        {%- else -%}
-          ?{{- class.binding_vars[loop.index0 // 2] }} {{ apply_prefixes(path) }} ?{{ class.binding_vars[loop.index0 // 2 + 1] ~ ' .\n' }}
-        {%- endif -%}
-      {%- endif -%}
-    {%- endfor -%}
+    {{- path_query(class.path_array, class.binding_vars ) ~ '\n' -}}
     {%- for name, child in class.fields.items() -%}
       {%- if child.count -%}
         OPTIONAL { SELECT (COUNT({%- if child.distinct -%}DISTINCT {% endif -%}?{{ child.binding_vars[-1]}}) AS ?{{ child.binding_vars[-1] }}_count) ?{{ class.binding_vars[-1] }} WHERE {
