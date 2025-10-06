@@ -1,6 +1,10 @@
 {%- if logging -%}
 import logging
 {% endif -%}
+{%- if git %}
+import importlib
+import sys
+{%- endif %}
 from os import path
 from typing import Annotated
 
@@ -43,7 +47,21 @@ app.add_middleware(
 @app.get("/", include_in_schema=False)
 def version():
     repo = Repo(search_parent_directories=True)
-    return {"version": repo.git.describe(tags=True, dirty=True, always=True)}
+
+    def get_version(module_name):
+        try:
+            return importlib.metadata.version(module_name)
+        except importlib.metadata.PackageNotFoundError:
+            return None
+
+    return {
+        "version": repo.git.describe(tags=True, dirty=True, always=True),
+        "modules": {
+            module: get_version(module)
+            for module in sys.modules.keys()
+            if get_version(module)
+        },
+    }
 {% endif %}
 
 def load_query(name):
