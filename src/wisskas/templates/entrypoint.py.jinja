@@ -56,6 +56,7 @@ def version():
 
     return {
         "version": repo.git.describe(tags=True, dirty=True, always=True),
+        "python": sys.version,
         "modules": {
             module: get_version(module)
             for module in sys.modules.keys()
