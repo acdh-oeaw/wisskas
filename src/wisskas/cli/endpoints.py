@@ -163,8 +163,10 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
 
     file_output.add_argument(
         "--logging",
-        action="store_true",
-        help="print log messages during runtime",
+        "-l",
+        action="count",
+        default=0,
+        help="logging verbosity level. use -l for INFO, -ll for DEBUG",
     )
 
     return main
@@ -174,6 +176,10 @@ def main(args):
     _root_types, paths = parse_paths(args.input)
     args.prefix = dict(args.prefix)
     endpoints = {}
+
+    # TODO sanitize last elemenet of output_prefix (if any): no hyphens...
+    # https://python.land/courses/intermediate-python-course/lessons/modules-and-the-import-statement/topic/valid-modules-names
+    # TODO cannot start with a digit
 
     def add_endpoint(endpoint_path, endpoint):
         if endpoint_path in endpoints:
@@ -331,7 +337,7 @@ def main(args):
         {"origins": args.cors},
         args.page_size,
         {"timeout": args.timeout} if args.timeout else None,
-        args.logging,
+        30 - 10 * args.logging,
     )
 
     if args.server_address:
