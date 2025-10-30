@@ -25,10 +25,13 @@ from rdfproxy.utils.utils import ModelSPARQLMap
 from {{ endpoint.filename }} import {{ endpoint.class_name }}
 {% endfor %}
 
+logger = logging.getLogger(__name__)
+
 {% if logging -%}
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level={{ logging }})
 {% endif -%}
 
+# show informative errors/stack traces to consumers
 app = FastAPI(debug=True)
 
 {% if cors -%}
@@ -106,6 +109,7 @@ def {{ endpoint.filename }}(params: Annotated[{% if endpoint.filterable_fields %
         {%- endif -%}
     )
 
+    logger.info("querying {{url}}")
 {%- if endpoint.item_key %}
     return adapter.get_item(**{ "{{ endpoint.item_key }}": id})
 {% else %}
