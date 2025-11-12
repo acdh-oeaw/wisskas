@@ -266,7 +266,7 @@ def clone_include(
             name: clone_include(
                 clone,
                 name,
-                includes.get(name, []),
+                includes.get(name, includes.get("*", [])),
                 prefix,
                 used_names,
                 depth + 1,
@@ -274,6 +274,7 @@ def clone_include(
             )
             for name in clone.fields
             if "*" in include or "%" in include or name in includes
+            or any(i.startswith("*.") for i in include)
         }
     if len(clone.fields) == 0 and not clone.datatype_property and not clone.type:
         debug_filter(clone, "class is down to 0 fields", depth)
