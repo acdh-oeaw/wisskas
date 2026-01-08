@@ -151,7 +151,7 @@ def create_clone(
             if key.entity in ["*", "**", "%", "%%"]:
                 if len(key.entity) == 1 and len(clone.fields) == 0:
                     logger.warning(
-                        f"found '{key}' at {'.'.join(prefix[1:])} even though there are no fields"
+                        f"{parent.class_name}: found '{key}' at {'.'.join(prefix[1:])} even though there are no fields"
                     )
                 else:
                     debug_clone(clone, f"found field '{key}'", depth)
