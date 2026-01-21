@@ -99,8 +99,8 @@ def create_clone(
         clone.fields = clone.entity_reference.fields
         clone.class_name = f"{parent.class_name}_{clone.entity_reference.class_name}"
         clone.id = clone.entity_reference.id
-    # set parent paths to None
-    if len(clone.path_array) > len(parent.path_array):
+    # set parent paths to None (also for same path_array length in the case of datatype_property)
+    if len(clone.path_array) >= len(parent.path_array):
         for i in range(len(parent.path_array)):
             if (
                 parent.path_array[i] is None
@@ -108,7 +108,7 @@ def create_clone(
             ):
                 debug_clone(
                     clone,
-                    f"ignoring prefix because it exists in parent '{parent.id}'",
+                    f"ignoring prefix[{i}] ({clone.path_array[i]}) because it exists in parent '{parent.id}'",
                     depth,
                 )
                 clone.path_array[i] = None
