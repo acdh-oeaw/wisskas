@@ -45,6 +45,10 @@ app.add_middleware(
 
 {% endif %}
 
+{%- if httpx_args %}
+aclient_config = {{ httpx_args }}
+{% endif %}
+
 {%- if git %}
 # The automatic health check endpoint is /. The return code has to be 200 or 30x.
 @app.get("/", include_in_schema=False)
@@ -105,7 +109,7 @@ def {{ endpoint.filename }}(params: Annotated[{% if endpoint.filterable_fields %
         query=query,
         model={{ endpoint.class_name }},
         {% if httpx_args -%}
-        httpx_aclient_params={{ httpx_args }}
+        aclient_config=aclient_config
         {%- endif -%}
     )
 
