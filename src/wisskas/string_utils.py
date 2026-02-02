@@ -1,3 +1,6 @@
+import keyword
+import re
+
 FILTER_PATH_SEPARATOR = "."
 FILTER_PATH_INVERSION = "^"
 
@@ -58,7 +61,10 @@ def create_names(prefix: str, postfix: str, used_names=dict(), n=1) -> list[str]
 
 def to_classname(text: str) -> str:
     """Generate a valid Python class name from a string"""
-    return text.replace("_", " ").title().replace(" ", "")
+    name = "".join(w.capitalize() for w in re.findall(r"[A-Za-z0-9]+", text))
+    if not name or name[0].isdigit():
+        name = f"Class{name}"
+    return name + "Class" if keyword.iskeyword(name.lower()) else name
 
 
 def to_fieldname(text: str) -> str:
