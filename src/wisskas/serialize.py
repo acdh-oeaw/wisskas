@@ -16,6 +16,7 @@ def serialize_entrypoint(endpoints, backend_address: str, variables: dict) -> st
     return serialize(
         "entrypoint.py",
         {  # defaults
+            "cache": None,
             "cors": {},
             "counts_endpoint": False,
             "git_endpoint": False,

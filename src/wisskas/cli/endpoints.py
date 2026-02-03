@@ -156,6 +156,13 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
     )
 
     file_output.add_argument(
+        "--cache",
+        nargs="?",
+        type=int,
+        help="cache listing and item responses up to the given age (in seconds, default: don't cache)",
+    )
+
+    file_output.add_argument(
         "--cors",
         nargs="*",
         default=["*"],
@@ -340,6 +347,7 @@ def main(args):
         endpoints,
         args.server_address,
         {
+            "cache": args.cache,
             "cors": {"origins": args.cors},
             "counts_endpoint": args.counts_endpoint,
             "git_endpoint": args.git_endpoint,
