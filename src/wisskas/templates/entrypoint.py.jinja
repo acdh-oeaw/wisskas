@@ -1,7 +1,10 @@
 {%- if logging -%}
 import logging
 {% endif -%}
-{%- if git %}
+{%- if httpx_args or httpx_transport_args %}
+import httpx
+{% endif -%}
+{%- if git_endpoint %}
 import importlib
 import sys
 {%- endif %}
@@ -13,7 +16,7 @@ from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 {%- endif %}
 from fastapi.responses import PlainTextResponse
-{%- if git %}
+{%- if git_endpoint %}
 from git import Repo
 {%- endif %}
 from pydantic import Field
@@ -45,11 +48,13 @@ app.add_middleware(
 
 {% endif %}
 
-{%- if httpx_args %}
+{%- if httpx_transport_args %}
+aclient_config = {{ httpx_args }} | { "transport": httpx.AsyncHTTPTransport(**{{ httpx_transport_args }}) }
+{%- elif httpx_args %}
 aclient_config = {{ httpx_args }}
 {% endif %}
 
-{%- if git %}
+{%- if git_endpoint %}
 # The automatic health check endpoint is /. The return code has to be 200 or 30x.
 @app.get("/", include_in_schema=False)
 def version():
@@ -108,7 +113,7 @@ def {{ endpoint.filename }}(params: Annotated[{% if endpoint.filterable_fields %
         target="{{ backend_address }}",
         query=query,
         model={{ endpoint.class_name }},
-        {% if httpx_args -%}
+        {% if httpx_args or httpx_transport_args -%}
         aclient_config=aclient_config
         {%- endif -%}
     )
@@ -122,7 +127,7 @@ def {{ endpoint.filename }}(params: Annotated[{% if endpoint.filterable_fields %
 
 {%- endfor %}
 
-{% if counts %}
+{% if counts_endpoint %}
 @app.get("/counts")
 def counts():
     """Return item counts for all listing endpoints"""

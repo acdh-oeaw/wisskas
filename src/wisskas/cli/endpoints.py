@@ -56,6 +56,13 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         type=float,
         help="timeout for the triple store queries (in seconds, default: use httpx AsyncClient default)",
     )
+    parser.add_argument(
+        "-r",
+        "--retries",
+        nargs="?",
+        type=int,
+        help="transport connection retries for the triple store queries (default: use httpx AsyncHTTPTransport default)",
+    )
 
     parser.add_argument(
         "-le",
@@ -332,12 +339,15 @@ def main(args):
     entrypoint = serialize_entrypoint(
         endpoints,
         args.server_address,
-        args.git_endpoint,
-        args.counts_endpoint,
-        {"origins": args.cors},
-        args.page_size,
-        {"timeout": args.timeout} if args.timeout else None,
-        30 - 10 * args.logging,
+        {
+            "cors": {"origins": args.cors},
+            "counts_endpoint": args.counts_endpoint,
+            "git_endpoint": args.git_endpoint,
+            "httpx_args": {"timeout": args.timeout} if args.timeout else None,
+            "httpx_transport_args": {"retries": args.retries} if args.retries else None,
+            "logging": 30 - 10 * args.logging,
+            "page_size": args.page_size,
+        },
     )
 
     if args.server_address:

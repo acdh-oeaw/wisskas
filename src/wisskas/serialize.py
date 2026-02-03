@@ -7,39 +7,34 @@ env.filters["any"] = any
 env.filters["all"] = all
 
 
-def serialize(template_name, **kwargs):
+def serialize(template_name: str, variables: dict):
     template = env.get_template(f"{template_name}.jinja")
-    return template.render(**kwargs)
+    return template.render(variables)
 
 
-def serialize_entrypoint(
-    endpoints,
-    backend_address,
-    git_endpoint=False,
-    counts_endpoint=False,
-    cors={},
-    page_size=None,
-    httpx_args={},
-    logging=False,
-) -> str:
+def serialize_entrypoint(endpoints, backend_address: str, variables: dict) -> str:
     return serialize(
         "entrypoint.py",
-        **{
-            "backend_address": backend_address,
-            "cors": cors,
+        {  # defaults
+            "cors": {},
+            "counts_endpoint": False,
+            "git_endpoint": False,
+            "httpx_args": {},
+            "httpx_transport_args": {},
+            "logging": False,
+            "page_size": None,
+        }
+        | variables
+        | {
             "endpoints": endpoints,
-            "git": git_endpoint,
-            "counts": counts_endpoint,
-            "page_size": page_size,
-            "httpx_args": httpx_args,
-            "logging": logging,
+            "backend_address": backend_address,
         },
     )
 
 
 def serialize_model(root):
-    return serialize("model.py", **{"root": root})
+    return serialize("model.py", {"root": root})
 
 
-def serialize_query(root, prefixes={}):
-    return serialize("query.rq", **{"root": root, "prefixes": prefixes})
+def serialize_query(root, prefixes: dict[str, str] = {}):
+    return serialize("query.rq", {"root": root, "prefixes": prefixes})
