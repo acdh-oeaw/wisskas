@@ -73,7 +73,10 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         "-le",
         "--listing-exclude-fields",
         nargs="+",
-        metavar=("path_id[/endpoint/target/path][?sort1,sort2,...]", "exclude_field"),
+        metavar=(
+            "path_id[/endpoint/target/path][|queryable_field][?sortable_field1,sortable_field2,...]",
+            "exclude_field",
+        ),
         action="append",
         help="a path id for which to generate a list/page endpoint, followed by 0 or more field paths that should be excluded from the endpoint return value. any fields not in this list will be included by default.",
         default=[],
@@ -93,7 +96,10 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         "-li",
         "--listing-include-fields",
         nargs="+",
-        metavar=("path_id[/endpoint/target/path][?sort1,sort2,...]", "include_field"),
+        metavar=(
+            "path_id[/endpoint/target/path][|queryable_field][?sortable_field1,sortable_field2,...]",
+            "include_field",
+        ),
         action="append",
         help="a path id for which to generate a list/page endpoint, followed by 1 or more field paths that should be included in the endpoint return value.",
         default=[],
