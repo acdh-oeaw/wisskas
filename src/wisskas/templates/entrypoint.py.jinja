@@ -8,7 +8,7 @@ import logging
 import sys
 {%- endif %}
 from os import path
-from typing import Annotated
+from typing import Annotated{% if counts_endpoint %}, TypedDict{% endif %}
 {% if httpx_args or httpx_transport_args %}
 import httpx
 {% endif -%}
@@ -33,9 +33,10 @@ from rdfproxy.utils.utils import ModelSPARQLMap
 {% for endpoint in endpoints.values() | sort(attribute="filename") -%}
 from {{ endpoint.filename }} import {{ endpoint.class_name }}
 {% endfor %}
-logger = logging.getLogger(__name__)
 
 {% if logging -%}
+logger = logging.getLogger(__name__)
+
 logging.basicConfig(level={{ logging }})
 {% endif -%}
 
@@ -95,16 +96,19 @@ def noresultsfound_exception_handler(_: Request, exc: NoResultsFound):
 
 class DefaultQueryParameters(QueryParameters):
     size: int = Field(default={{ page_size }}, ge=1)
+{%- if named_graphs %}
+    named_graph: str | None = None
+{% endif %}
 
 class FilterableQueryParameters(DefaultQueryParameters):
     query: str | None = None
 
 {% for url, endpoint in endpoints | dictsort %}
-{%- if cache %}
+{% if cache -%}
 @app.get("{{ url }}", dependencies=[cache(max_age={{ cache }}, public=True)])
-{% else %}
+{%- else -%}
 @app.get("{{ url }}")
-{% endif %}
+{%- endif -%}
 {%- if endpoint.item_key %}
 def {{ endpoint.filename }}(id: str) -> {{ endpoint.class_name }}:
 {% else %}
@@ -116,6 +120,11 @@ def {{ endpoint.filename }}(params: Annotated[{% if endpoint.filterable_fields %
         bindings = ModelSPARQLMap({{ endpoint.class_name }}, True)
         fields = [ bindings[f] for f in {{ endpoint.filterable_fields }}]
         query = query[:-2] + " FILTER ( " + " || ".join(f'CONTAINS(?{f}, "{q}")' for f in fields for q in params.query.split(' ')) + ") }"
+    {%- endif %}
+    {%- if named_graphs and not endpoint.item_key %}
+    if params.named_graph:
+        query = query.split("\n\nWHERE {", 1)
+        query = f"{query[0]} WHERE {% raw %}{{{% endraw %} GRAPH <{params.named_graph}> {% raw %}{{{% endraw %} {query[1]} {% raw %}}}{% endraw %}"
     {%- endif %}
     adapter = SPARQLModelAdapter(
         target="{{ backend_address }}",
@@ -136,13 +145,19 @@ def {{ endpoint.filename }}(params: Annotated[{% if endpoint.filterable_fields %
 {%- endfor %}
 
 {% if counts_endpoint %}
+Counts = TypedDict('Counts', {
+{%- for url, endpoint in endpoints | dictsort if not endpoint.item_key %}
+    "{{url}}": int,
+{%- endfor %}
+})
+
 @app.get("/counts")
-def counts():
+def counts(named_graph: str | None = None) -> Counts:
     """Return item counts for all listing endpoints"""
     return {
     {%- for url, endpoint in endpoints | dictsort -%}
         {%- if not endpoint.item_key %}
-        "{{ url }}": {{ endpoint.filename }}(params=FilterableQueryParameters(size=1)).total,
+        "{{ url }}": {{ endpoint.filename }}(params=FilterableQueryParameters(size=1, named_graph=named_graph)).total,
         {%- endif -%}
     {%- endfor %}
     }

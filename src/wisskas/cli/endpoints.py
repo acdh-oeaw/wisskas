@@ -63,6 +63,11 @@ def register_subcommand(parser: ArgumentParser) -> Callable:
         type=int,
         help="transport connection retries for the triple store queries (default: use httpx AsyncHTTPTransport default)",
     )
+    parser.add_argument(
+        "--named-graphs",
+        action="store_true",
+        help="add a named_graph query parameter to all endpoints, allowing users to query from individual named graphs",
+    )
 
     parser.add_argument(
         "-le",
@@ -354,6 +359,7 @@ def main(args):
             "httpx_args": {"timeout": args.timeout} if args.timeout else None,
             "httpx_transport_args": {"retries": args.retries} if args.retries else None,
             "logging": 30 - 10 * args.logging,
+            "named_graphs": args.named_graphs,
             "page_size": args.page_size,
         },
     )
