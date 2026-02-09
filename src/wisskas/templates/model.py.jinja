@@ -28,9 +28,9 @@ class {{ class.class_name }}(BaseModel):
         orderable_fields=["{{ class.orderable_fields | join('", "') }}"],
         {%- endif %}
     )
-    {%- if is_grouped and not class.root -%}{# model needs it (if this model exists, so can be none) #}
+    {%- if not class.root or is_grouped %}{# model needs it (if this model exists, so can be none) #}
     id: Annotated[AnyUrl | None, SPARQLBinding("{{ class.binding }}")] = {% if class.include_id %}None{% else %}Field(default=None, exclude=True){% endif %}
-    {%- elif class.root or class.include_id %}{# non-grouped, i.e. basic nested model #}
+    {%- else %}{# mandatory for top level entities #}
     id: Annotated[AnyUrl, SPARQLBinding("{{ class.binding }}")]
     {%- endif %}
 {% for fieldname, field in class.fields.items() %}
