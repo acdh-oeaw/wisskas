@@ -12,7 +12,8 @@ WISSKI_TYPES = {
     # TODO add support for all Wisski field types: https://wiss-ki.eu/documentation/pathbuilder/configuration/lists
     "datetime": "datetime.datetime",
     "list_string": "list[str]",  # FIXME this doesn't get annotated properly, need to change the Type's cardinality instead
-    "geofield": "str",  # TODO
+    "geofield": "Coordinate",  # TODO need to add import from pydantic_extra_types.coordinate
+    "integer": "int",
     "string": "str",
     "uri": "AnyUrl",
 }
@@ -58,11 +59,11 @@ class WissKIPath:
         self.entity_reference = self.xml["fieldtype"] == "entity_reference"
 
         # set python field type
-        self.type = (
-            WISSKI_TYPES[self.xml["fieldtype"]]
-            if self.xml["fieldtype"] and not self.entity_reference
-            else None
-        )
+        self.type = WISSKI_TYPES.get(self.xml["fieldtype"], None)
+        if self.type == None and self.xml["fieldtype"] and not self.entity_reference:
+            logger.error(
+                f"Path '{self.id}' has unknown fieldtype '{self.xml['fieldtype']}'"
+            )
 
     def last_entity(self) -> str:
         return self.path_array[-1].entity
